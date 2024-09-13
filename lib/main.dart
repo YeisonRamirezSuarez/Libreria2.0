@@ -36,8 +36,13 @@ class MyApp extends StatelessWidget {
           suffixIconColor: Colors.white,
         ),
       ),
-      home: const LoginScreen(),
-      // home: const UserPage(),
+      home: GestureDetector(
+        onTap: () {
+          // Oculta el teclado al tocar fuera de un campo de texto
+          FocusScope.of(context).unfocus();
+        },
+        child: LoginScreen(), // O el widget que desees mostrar
+      ),
     );
   }
 }

@@ -1,62 +1,89 @@
 import 'package:flutter/material.dart';
+
 class CustomTextField extends StatelessWidget {
   final String hintText;
   final IconData icon;
   final bool obscureText;
   final IconData? suffixIcon;
   final TextInputType? keyboardType;
+  final String? Function(String?)? validator;
+  final TextEditingController controller;
 
   const CustomTextField({
     required this.hintText,
     required this.icon,
+    required this.controller,
     this.obscureText = false,
     this.suffixIcon,
     this.keyboardType,
+    this.validator,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Obtener tamaño de pantalla para hacer el diseño responsivo
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Container(
-      height: 70.0, // Adjust the height to make the TextField taller
-      child: TextField(
+      // Aplicar restricciones de tamaño personalizadas
+      width: screenWidth * 0.98, // Hacer que el campo ocupe el 98% del ancho de la pantalla
+      constraints: BoxConstraints(
+        minHeight: screenHeight * 0.07, // Altura mínima
+        maxHeight: screenHeight * 0.12, // Altura máxima
+      ),
+      child: TextFormField(
         obscureText: obscureText,
+        controller: controller,
         keyboardType: keyboardType,
+        cursorColor: Colors.redAccent, // Color del cursor
+
         decoration: InputDecoration(
-          hintText: hintText,
+          labelText: hintText, // Usar labelText en lugar de hintText
+          labelStyle: TextStyle(
+            color: Colors.white, // Color del texto de la etiqueta
+            fontSize: 18.0, // Tamaño del texto de la etiqueta
+          ),
           prefixIcon: Icon(icon, color: Theme.of(context).inputDecorationTheme.prefixIconColor),
           suffixIcon: suffixIcon != null
               ? Icon(suffixIcon, color: Theme.of(context).inputDecorationTheme.suffixIconColor)
               : null,
-          // Customize the border
+          // Personalizar el borde
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20.0), // Rounded corners
-            borderSide: BorderSide(
-              color: Colors.white, // Border color
-              width: 1.0, // Increased border width
+            borderRadius: BorderRadius.circular(20.0), // Esquinas redondeadas
+            borderSide: const BorderSide(
+              color: Colors.white, // Color del borde
+              width: 2.0, // Grosor del borde
             ),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20.0), // Rounded corners
-            borderSide: BorderSide(
-              color: Colors.black, // Border color when the field is enabled
-              width: 1.0, // Increased border width
+            borderRadius: BorderRadius.circular(20.0),
+            borderSide: const BorderSide(
+              color: Colors.black, // Color del borde cuando está habilitado
+              width: 2.0,
             ),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20.0), // Rounded corners
+            borderRadius: BorderRadius.circular(20.0),
             borderSide: BorderSide(
-              color: Colors.white.withOpacity(0.4), // Border color when the field is focused
-              width: 1.0, // Increased border width
+              color: Colors.redAccent, // Color del borde cuando está enfocado
+              width: 2.0,
             ),
           ),
-          contentPadding: EdgeInsets.symmetric(vertical: 20.0, horizontal: 15.0), // Adjust padding for height
+          contentPadding: EdgeInsets.symmetric(
+            vertical: screenHeight * 0.029, // Aumenta el padding vertical
+            horizontal: screenWidth * 0.04, // Aumenta el padding horizontal
+          ),
         ),
-        style: const TextStyle(color: Colors.white, fontSize: 20.0), // Adjust text size if needed
+        style: const TextStyle(color: Colors.white, fontSize: 22.0), // Aumentar el tamaño del texto
+        validator: validator, // Función de validación
       ),
     );
   }
 }
+
+
 
 class HeaderText extends StatelessWidget {
   final String title;
@@ -72,6 +99,9 @@ class HeaderText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Obtener tamaño de pantalla para hacer el diseño responsivo
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Column(
       children: <Widget>[
         Text(
@@ -83,20 +113,20 @@ class HeaderText extends StatelessWidget {
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 5.0),
+        SizedBox(height: screenWidth * 0.02), // Ajuste del espacio entre el título y descripciones
         Text(
           description1,
-          style: const TextStyle(
-            fontSize: 15.0,
-            color: Color(0xFF636060),
+          style: TextStyle(
+            fontSize: screenWidth * 0.045, // Ajustar tamaño de texto
+            color: const Color(0xFF636060),
           ),
           textAlign: TextAlign.center,
         ),
         Text(
           description2,
-          style: const TextStyle(
-            fontSize: 15.0,
-            color: Color(0xFF636060),
+          style: TextStyle(
+            fontSize: screenWidth * 0.045, // Ajustar tamaño de texto
+            color: const Color(0xFF636060),
           ),
           textAlign: TextAlign.center,
         ),
@@ -104,4 +134,3 @@ class HeaderText extends StatelessWidget {
     );
   }
 }
-
