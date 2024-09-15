@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/pages/user_libros_disponibles_page.dart';
 import 'package:libreria_app/widgets/custom_widgets.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class RegisterLibroPage extends StatefulWidget {
+class UpdateLibroPage extends StatefulWidget {
   final String email;
   final String rol;
+  final int libroId; // Añadimos un ID para identificar el libro
 
-  const RegisterLibroPage({super.key, required this.email, required this.rol});
+  const UpdateLibroPage(
+      {super.key,
+      required this.email,
+      required this.rol,
+      required this.libroId});
 
   @override
-  _RegisterLibroPageState createState() => _RegisterLibroPageState();
+  _UpdateLibroPageState createState() => _UpdateLibroPageState();
 }
 
-class _RegisterLibroPageState extends State<RegisterLibroPage> {
+class _UpdateLibroPageState extends State<UpdateLibroPage> {
   final _formKey = GlobalKey<FormState>();
 
   // Controladores para los campos de texto
@@ -25,33 +29,52 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
   final _urlImagenController = TextEditingController();
   final _descripcionController = TextEditingController();
 
-  @override
-  void dispose() {
-    _tituloController.dispose();
-    _autorController.dispose();
-    _cantidadController.dispose();
-    _urlLibroController.dispose();
-    _urlImagenController.dispose();
-    _descripcionController.dispose();
-    super.dispose();
+  // Método para obtener los datos del libro por ID
+  Future<void> fetchLibroData(int libroId) async {
+    final url =
+        Uri.parse("http://192.168.80.20:80/libreria/api/libro.php?id=$libroId");
+
+    try {
+      final response = await http.get(url);
+
+      print(response.body);
+      print(response.statusCode);
+
+      if (response.statusCode == 201) {
+        final data = json.decode(response.body);
+        setState(() {
+          _tituloController.text = data['data'][0]['title'];
+          _autorController.text = data['data'][0]['author'];
+          _cantidadController.text = data['data'][0]['quantity'].toString();
+          _urlLibroController.text = data['data'][0]['book_url'];
+          _urlImagenController.text = data['data'][0]['image_url'];
+          _descripcionController.text = data['data'][0]['description'];
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error al obtener los datos del libro')),
+        );
+      }
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error de red: $error')),
+      );
+      print('Error de red: $error');
+    }
   }
 
-  Future<void> registerLibro(String titulo, String autor, String cantidad,
+  // Método para actualizar los datos del libro
+  Future<void> _updateLibro(String titulo, String autor, String cantidad,
       String urlLibro, String urlImagen, String descripcion) async {
-    final url = Uri.parse("http://192.168.80.20:80/libreria/api/libro.php");
-
-    print(titulo);
-    print(autor);
-    print(cantidad);
-    print(urlLibro);
-    print(urlImagen);
-    print(descripcion);
+    final url = Uri.parse(
+        "http://192.168.80.20:80/libreria/api/libro.php?update=1&id=${widget.libroId}");
 
     try {
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
+          "id": widget.libroId,
           "title": titulo,
           "author": autor,
           "quantity": cantidad,
@@ -61,16 +84,14 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
         }),
       );
 
-      // Imprime la respuesta cruda para depuración
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      print(response.body);
+      print(response.statusCode);
 
-      if (response.statusCode == 201 || response.statusCode == 400) {
+      if (response.statusCode == 201) {
         final responseBody = json.decode(response.body);
-
-        if (responseBody['mensaje'] == 'success register') {
+        if (responseBody['mensaje'] == 'success update') {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Registro del libro exitoso')),
+            const SnackBar(content: Text('Libro actualizado exitosamente')),
           );
           Navigator.pop(context);
         } else {
@@ -88,6 +109,24 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
         SnackBar(content: Text('Error de red: $error')),
       );
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Obtener los datos del libro al abrir la página
+    fetchLibroData(widget.libroId);
+  }
+
+  @override
+  void dispose() {
+    _tituloController.dispose();
+    _autorController.dispose();
+    _cantidadController.dispose();
+    _urlLibroController.dispose();
+    _urlImagenController.dispose();
+    _descripcionController.dispose();
+    super.dispose();
   }
 
   @override
@@ -113,9 +152,11 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
                     ItemBannerUser(
                       estadoUsuario: false,
                       seaching: false,
-                      titleBaner: "Agregar libro",
+                      deleteBook: true,
+                      titleBaner: "Actualizar libro",
                       rolUser: widget.rol,
                       nameUser: widget.email,
+                      idLibro: widget.libroId,
                     ),
                     CustomTextField(
                       hintText: 'Título Libro',
@@ -197,10 +238,10 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
                     ),
                     SizedBox(height: screenHeight * 0.02),
                     CustomButton(
-                      text: 'Agregar Libro',
+                      text: 'Actualizar Libro',
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
-                          registerLibro(
+                          _updateLibro(
                             _tituloController.text,
                             _autorController.text,
                             _cantidadController.text,

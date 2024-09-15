@@ -1,21 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:libreria_app/pages/user_libros_disponibles_page.dart';
 
 class ItemBannerUser extends StatefulWidget {
   final bool estadoUsuario; // Estado del usuario
   final bool seaching;
+  final bool deleteBook;
   final String titleBaner;
   final String rolUser;
   final String nameUser;
   final List<Option> options; // Lista de opciones
+  final int idLibro;
 
   const ItemBannerUser({
     super.key,
     required this.estadoUsuario,
     this.seaching = false,
+    this.deleteBook = false,
     this.titleBaner = 'Titulo del Banner',
     this.rolUser = 'Rol de Usuario',
     this.nameUser = 'Nombre del Administrador',
     this.options = const [], // Nueva propiedad para opciones
+    this.idLibro = 0,
   });
 
   @override
@@ -43,6 +49,34 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
     // Dispose the FocusNode to free resources
     _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  // Función para eliminar un libro usando el método POST
+  Future<void> _deleteLibro(int idLibro) async {
+    try {
+      print(idLibro);
+      final url = Uri.parse(
+          'http://192.168.80.20:80/libreria/api/libro.php?delete=1&id=$idLibro');
+      final response = await http.post(url);
+
+      print(response.body); // Imprime el cuerpo de la respuesta
+      print(response.statusCode); // Imprime el código de estado de la respuesta
+
+      if (response.statusCode == 201) {
+        print("Libro eliminado correctamente");
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Libro eliminado con éxito.')),
+        );
+      } else {
+        throw Exception('Error al eliminar el libro: ${response.statusCode}');
+      }
+    } catch (e) {
+      print("Error al eliminar el libro: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error al eliminar el libro.')),
+      );
+    }
   }
 
   @override
@@ -113,6 +147,7 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
                                           const TextStyle(color: Colors.white),
                                     ),
                                     onTap: () {
+                                      Navigator.pop(context); // Cierra el modal
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
@@ -136,10 +171,11 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
                       iconSize: 50.0,
                       color: Colors.redAccent,
                       onPressed: () {
-                        Navigator.of(context)
-                            .pop(); // Cierra el Modal si está abierto
-
-                        Navigator.pop(context);
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    UserLibrosDisponiblesPage()));
                       },
                       tooltip: 'Volver',
                     ),
@@ -176,17 +212,39 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
               ),
             ),
 
-            // Banner title
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 10.0),
-              child: Text(
-                widget.titleBaner,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 30.0,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.titleBaner,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 30.0,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.left,
+                    ),
+                  ),
+                  if (widget.deleteBook) // Conditionally include the IconButton
+                    IconButton(
+                      icon: const Icon(
+                        Icons.delete_rounded,
+                        color: Colors.redAccent,
+                        size: 50,
+                      ),
+                      onPressed: () {
+                        // Define the action when the icon is pressed
+                        _deleteLibro(widget.idLibro);
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    UserLibrosDisponiblesPage()));
+                      },
+                    ),
+                ],
               ),
             ),
 

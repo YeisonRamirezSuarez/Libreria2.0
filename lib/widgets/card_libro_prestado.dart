@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:libreria_app/widgets/custom_widgets.dart';
 
 class BookCard extends StatelessWidget {
   final String imageUrl; // URL o ruta de la imagen
@@ -26,15 +27,11 @@ class BookCard extends StatelessWidget {
       child: Row(
         children: [
           // Imagen del libro
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: Image.network(
-              imageUrl,
-              width: 100,
-              height: 150,
-              fit: BoxFit.cover,
-            ),
-          ),
+           ImageWidget(
+          imageUrl: imageUrl,
+          width: 100,
+          height: 150,
+        ),
           const SizedBox(width: 20),
           // Información del libro
           Expanded(

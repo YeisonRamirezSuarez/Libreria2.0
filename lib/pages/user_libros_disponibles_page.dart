@@ -1,13 +1,51 @@
+import 'dart:convert'; // Necesario para decodificar el JSON
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:libreria_app/pages/register_libro_page.dart';
 import 'package:libreria_app/pages/login_page.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:libreria_app/widgets/card_libro_view.dart';
-import 'package:libreria_app/widgets/custom_button.dart';
+import 'package:libreria_app/pages/update_libro_page.dart';
+import 'package:libreria_app/pages/user_detalle_libro_history.dart';
+import 'package:libreria_app/widgets/custom_widgets.dart';
 import 'package:libreria_app/widgets/item_banner_user.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class UserLibrosDisponiblesPage extends StatelessWidget {
-  const UserLibrosDisponiblesPage({super.key});
+class UserLibrosDisponiblesPage extends StatefulWidget {
+  bool isAdminHistoric;
+  UserLibrosDisponiblesPage({super.key, this.isAdminHistoric = false});
+
+  @override
+  _UserLibrosDisponiblesPageState createState() =>
+      _UserLibrosDisponiblesPageState();
+}
+
+class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
+  Future<List<dynamic>> _fetchLibros() async {
+    try {
+      final response = await http
+          .get(Uri.parse('http://192.168.80.20:80/libreria/api/libro.php'));
+
+      print(
+          "Respuesta del servidor: ${response.body}"); // Esto imprimirá la respuesta completa del servidor
+
+      if (response.statusCode == 200) {
+        final decodedData = json.decode(response.body);
+
+        // Comprueba si el objeto decodedData contiene la clave "data" y que es una lista
+        if (decodedData['data'] != null && decodedData['data'] is List) {
+          return decodedData['data']; // Retorna solo la lista de libros
+        } else {
+          throw Exception(
+              'La respuesta no contiene la clave "data" o no es una lista');
+        }
+      } else {
+        throw Exception('Error de servidor: ${response.statusCode}');
+      }
+    } catch (e) {
+      print("Error al hacer la solicitud HTTP: $e");
+      throw Exception(
+          'Error al cargar los libros'); // Mantiene el mensaje de error original
+    }
+  }
 
   Future<Map<String, String>> _loadUserInfo() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -25,11 +63,11 @@ class UserLibrosDisponiblesPage extends StatelessWidget {
       future: _loadUserInfo(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else if (!snapshot.hasData) {
-          return Center(child: Text('No data found'));
+          return const Center(child: Text('No data found'));
         }
 
         final data = snapshot.data!;
@@ -38,64 +76,103 @@ class UserLibrosDisponiblesPage extends StatelessWidget {
 
         return GestureDetector(
           onTap: () {
-            // Ocultar el teclado al tocar en cualquier parte de la pantalla
-            FocusScope.of(context).unfocus();
+            FocusScope.of(context)
+                .unfocus(); // Ocultar el teclado si está abierto
           },
           child: SafeArea(
             child: Scaffold(
               body: Column(
                 children: [
                   ItemBannerUser(
-                    estadoUsuario: role == 'administrador' ? true : false,
+                    estadoUsuario:
+                        role == 'administrador' && !widget.isAdminHistoric
+                            ? true
+                            : false,
                     seaching: true,
-                    titleBaner: "Libros Disponibles",
+                    titleBaner:
+                        role == 'administrador' && widget.isAdminHistoric
+                            ? 'Libros Prestados'
+                            : 'Libros Disponibles',
                     rolUser: role,
                     nameUser: email,
-                    options: role == 'administrador'
+                    options: role == 'administrador' && !widget.isAdminHistoric
                         ? [
-                            /* Option(
-                              icon: Icon(Icons.book),
-                              title: 'Libros Prestados',
-                              destination: Text("ProcessTextPage"),
-                              //AdminLibrosPrestadospage(), // Reemplaza con tu pantalla
-                            ),*/
                             Option(
-                              icon: Icon(Icons.add_box_outlined),
-                              title: 'Agregar libro',
-                              destination: 
-                                  RegisterLibroPage(email: email, rol: role,), // Reemplaza con tu pantalla
+                              icon: const Icon(Icons.book),
+                              title: 'Libros Prestados',
+                              destination: UserLibrosDisponiblesPage(
+                                isAdminHistoric: true,
+                              ),
                             ),
                             Option(
-                              icon: Icon(Icons.exit_to_app),
+                              icon: const Icon(Icons.add_box_outlined),
+                              title: 'Agregar libro',
+                              destination: RegisterLibroPage(
+                                email: email,
+                                rol: role,
+                              ),
+                            ),
+                            Option(
+                              icon: const Icon(Icons.exit_to_app),
                               title: 'Cerrar Sesión',
-                              destination:
-                                  LoginScreen(), // Reemplaza con tu pantalla
+                              destination: LoginScreen(),
                             ),
                           ]
                         : [],
                   ),
                   Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(10.0),
-                      child: GridView.count(
-                        crossAxisCount: 2, // Dos columnas
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
-                        childAspectRatio:
-                            0.85, // Proporción de las tarjetas (más compactas)
-                        children: [
-                          libroCard('El principito', 'Antoine de Saint-Exupéry',
-                              'https://th.bing.com/th/id/OIP.6yF35Z7NHmGbFjZMc9aAhQHaKi?w=984&h=1400&rs=1&pid=ImgDetMain'),
-                          libroCard(
-                              'Harry Potter y la piedra filosofal',
-                              'J.K. Rowling',
-                              'https://th.bing.com/th/id/OIP.HMyiZ79cUZ2RtWOHeQqPYwHaLz?rs=1&pid=ImgDetMain'),
-                          libroCard('Sofia Qm', 'princesa',
-                              'https://th.bing.com/th/id/OIP.5NZ0uREl1IhFQhNIu9JDjQHaJn?rs=1&pid=ImgDetMain'),
-                          libroCard('El West', 'STREAMING',
-                              'https://th.bing.com/th/id/OIP.U8ToD6L1AYWfL4fpQWXtowHaEK?rs=1&pid=ImgDetMain'),
-                        ],
-                      ),
+                    child: FutureBuilder<List<dynamic>>(
+                      future: _fetchLibros(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        } else if (snapshot.hasError) {
+                          // Imprime el error en la consola
+                          print('Error: ${snapshot.error}');
+
+                          // Muestra el error en la interfaz de usuario
+                          return Center(
+                            child: Text('Error: ${snapshot.error}'),
+                          );
+                        } else if (!snapshot.hasData ||
+                            snapshot.data!.isEmpty) {
+                          return const Center(
+                              child: Text('No hay libros disponibles'));
+                        }
+
+                        final libros = snapshot.data!;
+
+                        return Padding(
+                          padding: const EdgeInsets.all(10.0),
+                          child: GridView.builder(
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 10,
+                              mainAxisSpacing: 10,
+                              childAspectRatio: 0.85,
+                            ),
+                            itemCount: libros.length,
+                            itemBuilder: (context, index) {
+                              final libro = libros[index];
+                              print(libro['image_url']);
+                              return libroCard(
+                                context,
+                                libro['id'],
+                                libro['title'],
+                                libro['author'],
+                                libro['image_url'],
+                                libro['description'],
+                                isAdminHistoric: widget.isAdminHistoric,
+                                role: role,
+                                email: email,
+                              );
+                            },
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -107,57 +184,88 @@ class UserLibrosDisponiblesPage extends StatelessWidget {
     );
   }
 
-  Widget libroCard(String titulo, String autor, String imageUrl) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white, // Fondo blanco
-        borderRadius: BorderRadius.circular(12.0), // Bordes redondeados
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            spreadRadius: 2,
-            blurRadius: 6,
-            offset: const Offset(0, 3), // Sombra ligera
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(
-                  8.0), // Bordes redondeados para la imagen
-              child: Image.network(
-                imageUrl,
-                fit: BoxFit
-                    .contain, // Cambia a "contain" para que la imagen no se recorte
-                width: 150.0,
-                height: 150.0,
+  Widget libroCard(BuildContext context, String id, String titulo, String autor,
+      String imageUrl, String descripcion,
+      {bool isAdminHistoric = false,
+      required String role,
+      required String email}) {
+    return GestureDetector(
+      onTap: () {
+        if (isAdminHistoric) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BookDetailHistoryPage(
+                imageUrl: imageUrl,
+                bookTitle: titulo,
+                bookAuthor: autor,
+                bookDescription: descripcion,
+                userName: 'Karl',
+                userPhone: '300112548',
+                userEmail: 'karl@upb.com',
+                role: role,
+                email: email,
               ),
             ),
-            const SizedBox(height: 8.0),
-            Text(
-              titulo,
-              style: const TextStyle(
-                fontSize: 16.0,
-                fontWeight: FontWeight.bold,
-                color: Colors.black, // Texto negro
+          );
+        } else if (!isAdminHistoric && role == 'administrador') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => UpdateLibroPage(
+                email: email,
+                rol: role,
+                libroId: int.parse(id), // Cambia esto según tu implementación
               ),
-              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 4.0),
-            Text(
-              autor,
-              style: TextStyle(
-                fontSize: 14.0,
-                color: Colors.grey[600], // Texto gris para el autor
-              ),
-              textAlign: TextAlign.center,
+          );
+        }
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12.0),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              spreadRadius: 2,
+              blurRadius: 6,
+              offset: const Offset(0, 3),
             ),
           ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              ImageWidget(
+                imageUrl: imageUrl,
+                height: 150.0,
+                width: 150.0,
+              ),
+              const SizedBox(height: 8.0),
+              Text(
+                titulo,
+                style: const TextStyle(
+                  fontSize: 16.0,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4.0),
+              Text(
+                autor,
+                style: TextStyle(
+                  fontSize: 14.0,
+                  color: Colors.grey[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );
