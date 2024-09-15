@@ -7,7 +7,7 @@ import 'package:libreria_app/pages/user_prestado_page.dart'; // Necesario para c
 void main() {
   runApp(const MyApp());
   SystemChrome.setSystemUIOverlayStyle(
-    SystemUiOverlayStyle(
+    const SystemUiOverlayStyle(
       statusBarColor: Colors.red, // Color rojo para la barra de estado
       statusBarIconBrightness: Brightness.light, // Iconos de color claro
     ),
