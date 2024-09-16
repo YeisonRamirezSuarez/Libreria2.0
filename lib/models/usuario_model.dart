@@ -1,63 +1,62 @@
 class Usuario {
-
-  final String id;
-  final String id_book;
+  final String? id; // Hacer id opcional
+  final String idBook;
   final String title;
   final String author;
-  final String book_url;
-  final String image_url;
+  final String bookUrl;
+  final String imageUrl;
   final String description;
   final String date;
-  final String email_user;
-  final String name_user;
-  final String phone_user;
-
+  final String emailUser;
+  final String nameUser;
+  final String phoneUser;
 
   Usuario({
-    required this.id,
-    required this.id_book,
+    this.id,
+    required this.idBook,
     required this.title,
     required this.author,
-    required this.book_url,
-    required this.image_url,
+    required this.bookUrl,
+    required this.imageUrl,
     required this.description,
     required this.date,
-    required this.email_user,
-    required this.name_user,
-    required this.phone_user
+    required this.emailUser,
+    required this.nameUser,
+    required this.phoneUser,
   });
 
-  // Define the fromJson method
   factory Usuario.fromJson(Map<String, dynamic> json) {
     return Usuario(
-      id: json['id'] as String,
-      id_book: json['id_book'] as String,
+      id: json['id'] as String?,
+      idBook: json['id_book'] as String,
       title: json['title'] as String,
       author: json['author'] as String,
-      book_url: json['book_url'] as String,
-      image_url: json['image_url'] as String,
+      bookUrl: json['book_url'] as String,
+      imageUrl: json['image_url'] as String,
       description: json['description'] as String,
       date: json['date'] as String,
-      email_user: json['email_user'] as String,
-      name_user: json['name_user'] as String,
-      phone_user: json['phone_user'] as String,
+      emailUser: json['email_user'] as String,
+      nameUser: json['name_user'] as String,
+      phoneUser: json['phone_user'] as String,
     );
   }
 
-  // Optional: Add a toJson method for easy conversion back to JSON
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'id_book': id_book,
+    final Map<String, dynamic> data = {
+      'id_book': idBook,
       'title': title,
       'author': author,
-      'book_url': book_url,
-      'image_url': image_url,
+      'book_url': bookUrl,
+      'image_url': imageUrl,
       'description': description,
       'date': date,
-      'email_user': email_user,
-      'name_user': name_user,
-      'phone_user': phone_user
+      'email_user': emailUser,
+      'name_user': nameUser,
+      'phone_user': phoneUser,
     };
+    if (id != null) {
+      data['id'] = id;
+    }
+    return data;
   }
 }

@@ -129,15 +129,13 @@ class ApiService {
     }
   }
 
-  static Future<List<Usuario>> fetchUsuariosHistorial() async {
-    final url = Uri.parse('${AppConfig.baseUrl}/peticiones.php?prestado=1');
+  static Future<List<Usuario>> fetchUsuariosHistorial(String email) async {
+    final url = Uri.parse('${AppConfig.baseUrl}/libro.php?email=$email');
 
     final response = await http.get(url);
 
-    print(response.statusCode);
-    print(response.body);
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 201) {
       final data = json.decode(response.body);
 
       if (data['data'] is List) {
@@ -151,6 +149,30 @@ class ApiService {
       // Add this throw statement to handle non-200 status codes.
       throw Exception(
           'Error al obtener el historial de libros. Código de estado: ${response.statusCode}');
+    }
+  }
+
+  static Future<ApiResponse> prestarLibro(Usuario usuario) async {
+    final url = Uri.parse('${AppConfig.baseUrl}/peticiones.php?prestar=1');
+    
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(usuario.toJson()),
+      );
+
+      print(response.body);
+      print(response.statusCode);
+
+      if (response.statusCode == 200) {
+        final responseBody = json.decode(response.body);
+        return ApiResponse.fromJson(responseBody);
+      } else {
+        throw Exception('Error al prestar libro: ${response.statusCode}');
+      }
+    } catch (error) {
+      throw Exception('Error de red: $error');
     }
   }
 

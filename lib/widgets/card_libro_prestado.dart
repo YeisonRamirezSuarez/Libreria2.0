@@ -27,66 +27,88 @@ class BookCard extends StatelessWidget {
       child: Row(
         children: [
           // Imagen del libro
-           ImageWidget(
-          imageUrl: imageUrl,
-          width: 100,
-          height: 150,
-        ),
+          ImageWidget(
+            imageUrl: imageUrl,
+            width: 100,
+            height: 150,
+          ),
           const SizedBox(width: 20),
           // Información del libro
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Título del libro
-                const Text(
-                  'Nombre:',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                // Autor del libro
-                const Text(
-                  'Autor:',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-                Text(
-                  author,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                // Fecha de préstamo
-                const Text(
-                  'Fecha Préstamo:',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-                Text(
-                  date,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.black,
-                  ),
-                ),
-              ],
+          _BookDetail(
+            title: title,
+            author: author,
+            date: date,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BookDetail extends StatelessWidget {
+  const _BookDetail({
+    super.key,
+    required this.title,
+    required this.author,
+    required this.date,
+  });
+
+  final String title;
+  final String author;
+  final String date;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Título del libro
+          const Text(
+            'Nombre:',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 10),
+          // Autor del libro
+          const Text(
+            'Autor:',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+          Text(
+            author,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 10),
+          // Fecha de préstamo
+          const Text(
+            'Fecha Préstamo:',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+          Text(
+            date,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black,
             ),
           ),
         ],

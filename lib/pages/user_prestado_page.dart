@@ -10,8 +10,9 @@ import 'package:libreria_app/widgets/custom_widgets.dart';
 class UserPrestadoPage extends StatelessWidget {
   const UserPrestadoPage({super.key});
 
-  Future<List<Usuario>> _fetchLibrosUser() async {
-    return ApiService.fetchUsuariosHistorial(); // Assuming this method fetches the books
+  Future<List<Usuario>> _fetchLibrosUser(String email) async {
+    return ApiService.fetchUsuariosHistorial(
+        email); // Assuming this method fetches the books
   }
 
   Future<Map<String, String>> _loadUserInfo() async {
@@ -76,14 +77,19 @@ class UserPrestadoPage extends StatelessWidget {
                   // Expanded widget to make the list scrollable and fill available space
                   Expanded(
                     child: FutureBuilder<List<Usuario>>(
-                      future: _fetchLibrosUser(),
+                      future: _fetchLibrosUser(email),
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                              child: CircularProgressIndicator());
                         } else if (snapshot.hasError) {
-                          return Center(child: Text('Error: ${snapshot.error}'));
-                        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                          return const Center(child: Text('No hay libros prestados.'));
+                          return Center(
+                              child: Text('Error: ${snapshot.error}'));
+                        } else if (!snapshot.hasData ||
+                            snapshot.data!.isEmpty) {
+                          return const Center(
+                              child: Text('No hay libros prestados.'));
                         }
 
                         final books = snapshot.data!;
@@ -91,7 +97,8 @@ class UserPrestadoPage extends StatelessWidget {
                         return ListView.builder(
                           itemCount: books.length,
                           itemBuilder: (context, index) {
-                            final book = books[index]; // Assuming books is List<Usuario>
+                            final book =
+                                books[index]; // Assuming books is List<Usuario>
                             return Padding(
                               padding: const EdgeInsets.all(2.0),
                               child: GestureDetector(
@@ -101,19 +108,22 @@ class UserPrestadoPage extends StatelessWidget {
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => BookDetailPage(
-                                        imageUrl: book.image_url,  // Update as per your model
-                                        title: book.title,        // Update as per your model
-                                        author: book.author,      // Update as per your model
-                                        date: book.date,          // Update as per your model
+                                        titleBaner: "Mis Libros Prestados",
+                                        usuario: book,
+                                        role: role,
+                                        correo: email,
+                                        cantButton: 2,
                                       ),
                                     ),
                                   );
                                 },
                                 child: BookCard(
-                                  imageUrl: book.image_url,  // Update as per your model
-                                  title: book.title,        // Update as per your model
-                                  author: book.author,      // Update as per your model
-                                  date: book.date,          // Update as per your model
+                                  imageUrl:
+                                      book.imageUrl, // Update as per your model
+                                  title: book.title, // Update as per your model
+                                  author:
+                                      book.author, // Update as per your model
+                                  date: book.date, // Update as per your model
                                 ),
                               ),
                             );
@@ -154,7 +164,9 @@ class UserPrestadoPage extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>  UserLibrosDisponiblesPage(),
+                              builder: (context) => UserLibrosDisponiblesPage(
+                                isUserHistoric: true,
+                              ),
                             ),
                           );
                         },

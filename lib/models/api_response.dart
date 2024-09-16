@@ -24,6 +24,22 @@ class ApiResponseRegistrer {
   }
 }
 
+class ApiResponse {
+  final bool success;
+  final String message;
+  final String? error;
+
+  ApiResponse({required this.success, required this.message, this.error});
+
+  factory ApiResponse.fromJson(Map<String, dynamic> json) {
+    return ApiResponse(
+      success: json['mensaje'] == 'success register',
+      message: json['mensaje'] ?? '',
+      error: json['error'],
+    );
+  }
+}
+
 class ApiResponseUpdate {
   final bool success;
   final String message;

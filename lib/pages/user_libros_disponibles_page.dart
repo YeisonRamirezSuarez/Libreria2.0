@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:libreria_app/models/book_model.dart';
 import 'package:libreria_app/models/usuario_model.dart';
+import 'package:libreria_app/pages/user_detalle_libro.dart';
 import 'package:libreria_app/services/api_services.dart';
 import 'package:libreria_app/widgets/custom_widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,7 +14,8 @@ class UserLibrosDisponiblesPage extends StatefulWidget {
   final bool isAdminHistoric;
   final bool isUserHistoric;
 
-  UserLibrosDisponiblesPage({super.key, this.isAdminHistoric = false, this.isUserHistoric = false});
+  UserLibrosDisponiblesPage(
+      {super.key, this.isAdminHistoric = false, this.isUserHistoric = false});
 
   @override
   _UserLibrosDisponiblesPageState createState() =>
@@ -29,6 +31,8 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
     final prefs = await SharedPreferences.getInstance();
     final role = prefs.getString('rol') ?? 'Rol de Usuario';
     final email = prefs.getString('email') ?? 'Nombre del Administrador';
+    //final name = prefs.getString('name') ?? 'Nombre del Administrador';
+    //final phone = prefs.getString('phone') ?? 'Nombre del Administrador'; //para obtener la info del usuario backend
     return {
       'role': role,
       'email': email,
@@ -61,11 +65,13 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
               body: Column(
                 children: [
                   ItemBannerUser(
-                    estadoUsuario: role == 'administrador' && !widget.isAdminHistoric,
+                    estadoUsuario:
+                        role == 'administrador' && !widget.isAdminHistoric,
                     seaching: true,
-                    titleBaner: role == 'administrador' && widget.isAdminHistoric
-                        ? 'Libros Prestados'
-                        : 'Libros Disponibles',
+                    titleBaner:
+                        role == 'administrador' && widget.isAdminHistoric
+                            ? 'Libros Prestados'
+                            : 'Libros Disponibles',
                     rolUser: role,
                     nameUser: email,
                     options: role == 'administrador' && !widget.isAdminHistoric
@@ -77,7 +83,8 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => UserLibrosDisponiblesPage(
+                                    builder: (context) =>
+                                        UserLibrosDisponiblesPage(
                                       isAdminHistoric: true,
                                     ),
                                   ),
@@ -122,12 +129,18 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
                     child: FutureBuilder<List<Book>>(
                       future: _fetchLibros(),
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                              child: CircularProgressIndicator());
                         } else if (snapshot.hasError) {
-                          return Center(child: Text('Error: ${snapshot.error}'));
-                        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                          return const Center(child: Text('No hay libros disponibles'));
+                          return Center(
+                              child: Text('Error: ${snapshot.error}'));
+                        } else if (!snapshot.hasData ||
+                            snapshot.data!.isEmpty) {
+                          return const Center(
+                            child: Text('No hay libros disponibles'),
+                          );
                         }
 
                         final libros = snapshot.data!;
@@ -135,7 +148,8 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
                         return Padding(
                           padding: const EdgeInsets.all(10.0),
                           child: GridView.builder(
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
                               crossAxisSpacing: 10,
                               mainAxisSpacing: 10,
@@ -152,6 +166,7 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
                                 libro.imageUrl,
                                 libro.description,
                                 isAdminHistoric: widget.isAdminHistoric,
+                                isUserHistoric: widget.isUserHistoric,
                                 role: role,
                                 email: email,
                               );
@@ -173,6 +188,7 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
   Widget libroCard(BuildContext context, String id, String titulo, String autor,
       String imageUrl, String descripcion,
       {bool isAdminHistoric = false,
+      bool isUserHistoric = false,
       required String role,
       required String email}) {
     return GestureDetector(
@@ -202,6 +218,30 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
                 email: email,
                 rol: role,
                 libroId: id,
+              ),
+            ),
+          );
+        } else if (isUserHistoric) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BookDetailPage(
+                usuario: Usuario(
+                  idBook: id.toString(),
+                  title: titulo,
+                  author: autor,
+                  bookUrl: imageUrl,
+                  imageUrl: imageUrl,
+                  description: descripcion,
+                  date: '',
+                  emailUser: email,
+                  nameUser: '',
+                  phoneUser: '',
+                ),
+                titleBaner: 'Prestar Libro',
+                role: role,
+                correo: email,
+                cantButton: 1,
               ),
             ),
           );
