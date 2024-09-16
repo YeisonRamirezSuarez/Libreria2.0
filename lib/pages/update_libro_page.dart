@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/widgets/custom_widgets.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:libreria_app/models/book_model.dart';
+import 'package:libreria_app/services/api_services.dart';
+import '../widgets/custom_text_field.dart';
+import '../widgets/custom_button.dart';
+import '../widgets/item_banner_user.dart';
+import '../utils/validators.dart';
 
 class UpdateLibroPage extends StatefulWidget {
   final String email;
   final String rol;
-  final int libroId; // Añadimos un ID para identificar el libro
+  final String libroId;
 
-  const UpdateLibroPage(
-      {super.key,
-      required this.email,
-      required this.rol,
-      required this.libroId});
+  const UpdateLibroPage({
+    super.key,
+    required this.email,
+    required this.rol,
+    required this.libroId,
+  });
 
   @override
   _UpdateLibroPageState createState() => _UpdateLibroPageState();
@@ -21,7 +25,6 @@ class UpdateLibroPage extends StatefulWidget {
 class _UpdateLibroPageState extends State<UpdateLibroPage> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controladores para los campos de texto
   final _tituloController = TextEditingController();
   final _autorController = TextEditingController();
   final _cantidadController = TextEditingController();
@@ -29,79 +32,45 @@ class _UpdateLibroPageState extends State<UpdateLibroPage> {
   final _urlImagenController = TextEditingController();
   final _descripcionController = TextEditingController();
 
-  // Método para obtener los datos del libro por ID
-  Future<void> fetchLibroData(int libroId) async {
-    final url =
-        Uri.parse("http://192.168.80.20:80/libreria/api/libro.php?id=$libroId");
-
+  Future<void> _fetchLibroData() async {
     try {
-      final response = await http.get(url);
-
-      print(response.body);
-      print(response.statusCode);
-
-      if (response.statusCode == 201) {
-        final data = json.decode(response.body);
-        setState(() {
-          _tituloController.text = data['data'][0]['title'];
-          _autorController.text = data['data'][0]['author'];
-          _cantidadController.text = data['data'][0]['quantity'].toString();
-          _urlLibroController.text = data['data'][0]['book_url'];
-          _urlImagenController.text = data['data'][0]['image_url'];
-          _descripcionController.text = data['data'][0]['description'];
-        });
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al obtener los datos del libro')),
-        );
-      }
+      final book = await ApiService.fetchBookData(int.parse(widget.libroId));
+      setState(() {
+        _tituloController.text = book.title;
+        _autorController.text = book.author;
+        _cantidadController.text = book.quantity;
+        _urlLibroController.text = book.bookUrl;
+        _urlImagenController.text = book.imageUrl;
+        _descripcionController.text = book.description;
+      });
     } catch (error) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error de red: $error')),
+        SnackBar(content: Text('Error al obtener los datos: $error')),
       );
-      print('Error de red: $error');
     }
   }
 
-  // Método para actualizar los datos del libro
-  Future<void> _updateLibro(String titulo, String autor, String cantidad,
-      String urlLibro, String urlImagen, String descripcion) async {
-    final url = Uri.parse(
-        "http://192.168.80.20:80/libreria/api/libro.php?update=1&id=${widget.libroId}");
+  Future<void> _updateLibro() async {
+    final book = Book(
+      id: widget.libroId,
+      title: _tituloController.text,
+      author: _autorController.text,
+      quantity: _cantidadController.text,
+      bookUrl: _urlLibroController.text,
+      imageUrl: _urlImagenController.text,
+      description: _descripcionController.text,
+    );
 
     try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          "id": widget.libroId,
-          "title": titulo,
-          "author": autor,
-          "quantity": cantidad,
-          "book_url": urlLibro,
-          "image_url": urlImagen,
-          "description": descripcion,
-        }),
-      );
-
-      print(response.body);
-      print(response.statusCode);
-
-      if (response.statusCode == 201) {
-        final responseBody = json.decode(response.body);
-        if (responseBody['mensaje'] == 'success update') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Libro actualizado exitosamente')),
-          );
-          Navigator.pop(context);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${responseBody['error']}')),
-          );
-        }
+      final response = await ApiService.updateBook(book);
+      if (response.success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Libro actualizado exitosamente')),
+        );
+        Navigator.pop(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error en el servidor')),
+          SnackBar(content: Text('${response.error}')),
         );
       }
     } catch (error) {
@@ -114,8 +83,7 @@ class _UpdateLibroPageState extends State<UpdateLibroPage> {
   @override
   void initState() {
     super.initState();
-    // Obtener los datos del libro al abrir la página
-    fetchLibroData(widget.libroId);
+    _fetchLibroData();
   }
 
   @override
@@ -156,19 +124,14 @@ class _UpdateLibroPageState extends State<UpdateLibroPage> {
                       titleBaner: "Actualizar libro",
                       rolUser: widget.rol,
                       nameUser: widget.email,
-                      idLibro: widget.libroId,
+                      idLibro: int.parse(widget.libroId),
                     ),
                     CustomTextField(
                       hintText: 'Título Libro',
                       icon: Icons.book,
                       controller: _tituloController,
                       keyboardType: TextInputType.text,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'El título es obligatorio';
-                        }
-                        return null;
-                      },
+                      validator: Validators.requiredFieldValidator,
                     ),
                     SizedBox(height: screenHeight * 0.01),
                     CustomTextField(
@@ -176,12 +139,7 @@ class _UpdateLibroPageState extends State<UpdateLibroPage> {
                       icon: Icons.person,
                       controller: _autorController,
                       keyboardType: TextInputType.text,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'El autor es obligatorio';
-                        }
-                        return null;
-                      },
+                      validator: Validators.requiredFieldValidator,
                     ),
                     SizedBox(height: screenHeight * 0.01),
                     CustomTextField(
@@ -189,12 +147,7 @@ class _UpdateLibroPageState extends State<UpdateLibroPage> {
                       icon: Icons.format_list_numbered,
                       controller: _cantidadController,
                       keyboardType: TextInputType.number,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'La cantidad es obligatoria';
-                        }
-                        return null;
-                      },
+                      validator: Validators.numberValidator,
                     ),
                     SizedBox(height: screenHeight * 0.01),
                     CustomTextField(
@@ -202,12 +155,7 @@ class _UpdateLibroPageState extends State<UpdateLibroPage> {
                       icon: Icons.link,
                       controller: _urlLibroController,
                       keyboardType: TextInputType.url,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'La URL del libro es obligatoria';
-                        }
-                        return null;
-                      },
+                      validator: Validators.urlValidator,
                     ),
                     SizedBox(height: screenHeight * 0.01),
                     CustomTextField(
@@ -215,12 +163,7 @@ class _UpdateLibroPageState extends State<UpdateLibroPage> {
                       icon: Icons.image,
                       controller: _urlImagenController,
                       keyboardType: TextInputType.url,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'La URL de la imagen es obligatoria';
-                        }
-                        return null;
-                      },
+                      validator: Validators.urlValidator,
                     ),
                     SizedBox(height: screenHeight * 0.01),
                     CustomTextField(
@@ -229,26 +172,14 @@ class _UpdateLibroPageState extends State<UpdateLibroPage> {
                       controller: _descripcionController,
                       keyboardType: TextInputType.multiline,
                       maxLines: 3,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'La descripción es obligatoria';
-                        }
-                        return null;
-                      },
+                      validator: Validators.requiredFieldValidator,
                     ),
                     SizedBox(height: screenHeight * 0.02),
                     CustomButton(
                       text: 'Actualizar Libro',
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
-                          _updateLibro(
-                            _tituloController.text,
-                            _autorController.text,
-                            _cantidadController.text,
-                            _urlLibroController.text,
-                            _urlImagenController.text,
-                            _descripcionController.text,
-                          );
+                          _updateLibro();
                         }
                       },
                       colorFondo: Colors.redAccent,

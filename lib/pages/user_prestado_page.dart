@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:libreria_app/models/usuario_model.dart';
+import 'package:libreria_app/services/api_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:libreria_app/pages/login_page.dart';
 import 'package:libreria_app/pages/user_detalle_libro.dart';
@@ -8,27 +10,9 @@ import 'package:libreria_app/widgets/custom_widgets.dart';
 class UserPrestadoPage extends StatelessWidget {
   const UserPrestadoPage({super.key});
 
-  // Lista de libros dinámica (puedes reemplazar esta data con datos reales)
-  final List<Map<String, String>> books = const [
-    {
-      'imageUrl': 'https://upload.wikimedia.org/wikipedia/en/0/05/Littleprince.JPG',
-      'title': 'El Principito',
-      'author': 'Antoine de Saint-Exupéry',
-      'date': '13 Sep 2024, 15:09',
-    },
-    {
-      'imageUrl': 'https://upload.wikimedia.org/wikipedia/en/0/05/Littleprince.JPG',
-      'title': 'El Principito 2',
-      'author': 'Antoine de Saint-Exupéry',
-      'date': '14 Sep 2024, 12:00',
-    },
-    {
-      'imageUrl': 'https://upload.wikimedia.org/wikipedia/en/0/05/Littleprince.JPG',
-      'title': 'El Principito 3',
-      'author': 'Antoine de Saint-Exupéry',
-      'date': '15 Sep 2024, 10:00',
-    },
-  ];
+  Future<List<Usuario>> _fetchLibrosUser() async {
+    return ApiService.fetchUsuariosHistorial(); // Assuming this method fetches the books
+  }
 
   Future<Map<String, String>> _loadUserInfo() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -46,11 +30,11 @@ class UserPrestadoPage extends StatelessWidget {
       future: _loadUserInfo(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else if (!snapshot.hasData) {
-          return Center(child: Text('No data found'));
+          return const Center(child: Text('No data found'));
         }
 
         final data = snapshot.data!;
@@ -75,43 +59,65 @@ class UserPrestadoPage extends StatelessWidget {
                     nameUser: email,
                     options: [
                       Option(
-                        icon: Icon(Icons.exit_to_app),
+                        icon: const Icon(Icons.exit_to_app),
                         title: 'Cerrar Sesión',
-                        destination: LoginScreen(), // Reemplaza con tu pantalla
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LoginScreen(),
+                            ),
+                          );
+                        }, // Reemplaza con tu pantalla
                       ),
                     ],
                   ),
 
                   // Expanded widget to make the list scrollable and fill available space
                   Expanded(
-                    child: ListView.builder(
-                      itemCount: books.length, // Dinámico según la lista de libros
-                      itemBuilder: (context, index) {
-                        final book = books[index];
-                        return Padding(
-                          padding: const EdgeInsets.all(2.0),
-                          child: GestureDetector(
-                            onTap: () {
-                              // Navegar a la pantalla de detalles al tocar
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => BookDetailPage(
-                                    imageUrl: book['imageUrl']!,
-                                    title: book['title']!,
-                                    author: book['author']!,
-                                    date: book['date']!,
-                                  ),
+                    child: FutureBuilder<List<Usuario>>(
+                      future: _fetchLibrosUser(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        } else if (snapshot.hasError) {
+                          return Center(child: Text('Error: ${snapshot.error}'));
+                        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          return const Center(child: Text('No hay libros prestados.'));
+                        }
+
+                        final books = snapshot.data!;
+
+                        return ListView.builder(
+                          itemCount: books.length,
+                          itemBuilder: (context, index) {
+                            final book = books[index]; // Assuming books is List<Usuario>
+                            return Padding(
+                              padding: const EdgeInsets.all(2.0),
+                              child: GestureDetector(
+                                onTap: () {
+                                  // Navegar a la pantalla de detalles al tocar
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => BookDetailPage(
+                                        imageUrl: book.image_url,  // Update as per your model
+                                        title: book.title,        // Update as per your model
+                                        author: book.author,      // Update as per your model
+                                        date: book.date,          // Update as per your model
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: BookCard(
+                                  imageUrl: book.image_url,  // Update as per your model
+                                  title: book.title,        // Update as per your model
+                                  author: book.author,      // Update as per your model
+                                  date: book.date,          // Update as per your model
                                 ),
-                              );
-                            },
-                            child: BookCard(
-                              imageUrl: book['imageUrl']!,
-                              title: book['title']!,
-                              author: book['author']!,
-                              date: book['date']!,
-                            ),
-                          ),
+                              ),
+                            );
+                          },
                         );
                       },
                     ),
@@ -148,7 +154,7 @@ class UserPrestadoPage extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => UserLibrosDisponiblesPage(),
+                              builder: (context) =>  UserLibrosDisponiblesPage(),
                             ),
                           );
                         },

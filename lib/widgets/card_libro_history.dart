@@ -6,7 +6,7 @@ class BookHistoryCardPage extends StatelessWidget {
   final String bookTitle;
   final String bookAuthor;
   final String bookDescription;
-  final List<Usuario>
+  final List<Usuario1>
       usuarios; // Cambiamos aquí para aceptar una lista de usuarios
 
   const BookHistoryCardPage({
@@ -120,7 +120,7 @@ class HistoryLibros extends StatelessWidget {
     required this.usuarios,
   });
 
-  final List<Usuario> usuarios;
+  final List<Usuario1> usuarios;
 
   @override
   Widget build(BuildContext context) {
@@ -263,10 +263,10 @@ class _infoUserLibroPrestado extends StatelessWidget {
 }
 
 // Definir la clase para un usuario
-class Usuario {
+class Usuario1 {
   final String nombre;
   final String telefono;
   final String email;
 
-  Usuario({required this.nombre, required this.telefono, required this.email});
+  Usuario1({required this.nombre, required this.telefono, required this.email});
 }

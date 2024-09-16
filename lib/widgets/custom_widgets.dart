@@ -4,3 +4,4 @@ export 'package:libreria_app/widgets/item_banner_user.dart';
 export 'package:libreria_app/widgets/card_libro_view.dart';
 export 'package:libreria_app/widgets/card_libro_prestado.dart';
 export 'package:libreria_app/widgets/img_custom.dart';
+export 'package:libreria_app/widgets/card_libro_history.dart';

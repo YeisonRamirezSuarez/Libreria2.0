@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:libreria_app/models/login_model.dart';
+import 'package:libreria_app/services/api_services.dart';
+import 'package:libreria_app/services/dialog_service.dart';
+import 'package:libreria_app/utils/validators.dart';
 import 'package:libreria_app/widgets/custom_widgets.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class RegisterUserPage extends StatefulWidget {
   const RegisterUserPage({super.key});
@@ -19,6 +21,31 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
   final _passwordController = TextEditingController();
+  AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
+  late final List<TextEditingController> _controllers;
+
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controllers = [
+      _nameController,
+      _emailController,
+      _phoneController,
+      _addressController,
+      _passwordController,
+    ];
+
+    for (var controller in _controllers) {
+      controller.addListener(() {
+        if (_autoValidateMode == AutovalidateMode.always) {
+          setState(() {});
+        }
+      });
+    }
+  
+  }
 
   @override
   void dispose() {
@@ -30,80 +57,34 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
     super.dispose();
   }
 
-  // Validador para el campo de correo electrónico
-  String? emailValidator(String? value) {
-    if (value == null || value.isEmpty) {
-      return '*Este campo es obligatorio';
+  Future<void> registerUser() async {
+    if (!_formKey.currentState!.validate()) {
+      setState(() {
+        _autoValidateMode = AutovalidateMode.always;
+      });
+      return;
     }
-    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-      return '*Por favor ingresa un correo válido';
-    }
-    return null;
-  }
 
-  // Validador para el campo de contraseña
-  String? passwordValidator(String? value) {
-    if (value == null || value.isEmpty) {
-      return '*Este campo es obligatorio';
-    }
-    if (value.length < 6) {
-      return '*La contraseña debe tener al menos 6 caracteres';
-    }
-    if (value.length > 20) {
-      return '*La contraseña no puede exceder los 20 caracteres';
-    }
-    return null;
-  }
-
-  // Método para hacer la petición POST al API de registro
-  Future<void> registerUser(String name, String email, String phone,
-      String address, String password) async {
-    final url = Uri.parse("http://192.168.80.20:80/libreria/api/usuario.php");
+    final user = User(
+      name: _nameController.text,
+      email: _emailController.text,
+      phone: _phoneController.text,
+      address: _addressController.text,
+      password: _passwordController.text,
+    );
 
     try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          "name": name,
-          "email": email,
-          "phone": phone,
-          "address": address,
-          "password": password,
-          "rol": "usuario",
-        }),
-      );
-      print(url);
-      print(response.body);
-      // Decodificar la respuesta
-      final responseBody = json.decode(response.body);
+      final response = await ApiService.registerUser(user);
 
-      print(responseBody);
-      print(response.statusCode);
-
-      if (response.statusCode == 201 || response.statusCode == 400) {
-        // Si el servidor devolvió una respuesta OK
-        if (responseBody['mensaje'] == 'success register') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Registro del usuario exitoso')),
-          );
-          Navigator.pop(context);
-          // Puedes navegar a otra pantalla o resetear el formulario
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${responseBody['error']}')),
-          );
-        }
+      if (response.success) {
+        DialogService.showErrorSnackBar(context, 'Registro exitoso');
+        Navigator.pop(context);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error en el servidor')),
-        );
+        DialogService.showErrorSnackBar(
+            context, response.error ?? 'Error desconocido');
       }
     } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error de red: $error')),
-      );
-      print('Error de red: $error');
+      DialogService.showErrorSnackBar(context, 'Error de red: $error');
     }
   }
 
@@ -124,6 +105,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
               padding: EdgeInsets.all(screenWidth * 0.05),
               child: Form(
                 key: _formKey,
+                autovalidateMode: _autoValidateMode,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
@@ -139,12 +121,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
                       icon: Icons.person,
                       controller: _nameController,
                       keyboardType: TextInputType.name,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'El nombre es obligatorio';
-                        }
-                        return null;
-                      },
+                      validator: Validators.requiredFieldValidator,
                     ),
                     SizedBox(height: screenHeight * 0.02),
                     CustomTextField(
@@ -152,7 +129,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
                       icon: Icons.email,
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      validator: emailValidator,
+                      validator: Validators.emailValidator,
                     ),
                     SizedBox(height: screenHeight * 0.02),
                     CustomTextField(
@@ -160,12 +137,8 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
                       icon: Icons.phone,
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'El teléfono es obligatorio';
-                        }
-                        return null;
-                      },
+                      maxLength: 10, // Límite de 10 caracteres
+                      validator: Validators.phoneValidator,
                     ),
                     SizedBox(height: screenHeight * 0.02),
                     CustomTextField(
@@ -173,37 +146,20 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
                       icon: Icons.home,
                       controller: _addressController,
                       keyboardType: TextInputType.streetAddress,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'La dirección es obligatoria';
-                        }
-                        return null;
-                      },
+                      validator: Validators.addressValidator,
                     ),
                     SizedBox(height: screenHeight * 0.02),
                     CustomTextField(
                       hintText: 'Contraseña',
                       icon: Icons.lock,
-                      obscureText: true,
+                      obscureText: true, // Indica que es un campo de contraseña
                       controller: _passwordController,
-                      suffixIcon: Icons.visibility_off,
-                      validator: passwordValidator,
+                      validator: Validators.passwordValidator,
                     ),
                     SizedBox(height: screenHeight * 0.05),
                     CustomButton(
                       text: 'Registrarse',
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          // Si las validaciones son correctas, hacemos el registro
-                          registerUser(
-                            _nameController.text,
-                            _emailController.text,
-                            _phoneController.text,
-                            _addressController.text,
-                            _passwordController.text,
-                          );
-                        }
-                      },
+                      onPressed: registerUser,
                       colorFondo: Colors.redAccent,
                     ),
                     SizedBox(height: screenHeight * 0.04),

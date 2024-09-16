@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/pages/user_libros_disponibles_page.dart';
-import 'package:libreria_app/widgets/custom_widgets.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:libreria_app/models/book_model.dart';
+import 'package:libreria_app/services/api_services.dart';
+import '../widgets/custom_text_field.dart';
+import '../widgets/custom_button.dart';
+import '../widgets/item_banner_user.dart';
+import '../utils/validators.dart';
 
 class RegisterLibroPage extends StatefulWidget {
   final String email;
@@ -24,6 +26,31 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
   final _urlLibroController = TextEditingController();
   final _urlImagenController = TextEditingController();
   final _descripcionController = TextEditingController();
+  AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
+  late final List<TextEditingController> _controllers;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Inicializar los controladores
+    _controllers = [
+      _tituloController,
+      _autorController,
+      _cantidadController,
+      _urlLibroController,
+      _urlImagenController,
+    ];
+
+    // Agregar los listeners a cada controlador
+    for (var controller in _controllers) {
+      controller.addListener(() {
+        if (_autoValidateMode == AutovalidateMode.always) {
+          setState(() {});
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -36,51 +63,34 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
     super.dispose();
   }
 
-  Future<void> registerLibro(String titulo, String autor, String cantidad,
-      String urlLibro, String urlImagen, String descripcion) async {
-    final url = Uri.parse("http://192.168.80.20:80/libreria/api/libro.php");
+  Future<void> registerLibro() async {
+    if (!_formKey.currentState!.validate()) {
+      setState(() {
+        _autoValidateMode = AutovalidateMode.always;
+      });
+      return;
+    }
 
-    print(titulo);
-    print(autor);
-    print(cantidad);
-    print(urlLibro);
-    print(urlImagen);
-    print(descripcion);
+    final book = Book(
+      title: _tituloController.text,
+      author: _autorController.text,
+      quantity: _cantidadController.text,
+      bookUrl: _urlLibroController.text,
+      imageUrl: _urlImagenController.text,
+      description: _descripcionController.text,
+    );
 
     try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          "title": titulo,
-          "author": autor,
-          "quantity": cantidad,
-          "book_url": urlLibro,
-          "image_url": urlImagen,
-          "description": descripcion,
-        }),
-      );
+      final response = await ApiService.registerBook(book);
 
-      // Imprime la respuesta cruda para depuración
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
-
-      if (response.statusCode == 201 || response.statusCode == 400) {
-        final responseBody = json.decode(response.body);
-
-        if (responseBody['mensaje'] == 'success register') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Registro del libro exitoso')),
-          );
-          Navigator.pop(context);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${responseBody['error']}')),
-          );
-        }
+      if (response.success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registro del libro exitoso')),
+        );
+        Navigator.pop(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error en el servidor')),
+          SnackBar(content: Text(response.error ?? 'Error desconocido')),
         );
       }
     } catch (error) {
@@ -107,6 +117,7 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
               padding: EdgeInsets.all(screenWidth * 0.01),
               child: Form(
                 key: _formKey,
+                autovalidateMode: _autoValidateMode,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
@@ -122,12 +133,7 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
                       icon: Icons.book,
                       controller: _tituloController,
                       keyboardType: TextInputType.text,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'El título es obligatorio';
-                        }
-                        return null;
-                      },
+                      validator: Validators.requiredFieldValidator,
                     ),
                     SizedBox(height: screenHeight * 0.01),
                     CustomTextField(
@@ -135,25 +141,16 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
                       icon: Icons.person,
                       controller: _autorController,
                       keyboardType: TextInputType.text,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'El autor es obligatorio';
-                        }
-                        return null;
-                      },
+                      validator: Validators.requiredFieldValidator,
                     ),
                     SizedBox(height: screenHeight * 0.01),
                     CustomTextField(
                       hintText: 'Cantidad Libro',
                       icon: Icons.format_list_numbered,
+                      maxLength: 3,
                       controller: _cantidadController,
                       keyboardType: TextInputType.number,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'La cantidad es obligatoria';
-                        }
-                        return null;
-                      },
+                      validator: Validators.numberValidator,
                     ),
                     SizedBox(height: screenHeight * 0.01),
                     CustomTextField(
@@ -161,12 +158,7 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
                       icon: Icons.link,
                       controller: _urlLibroController,
                       keyboardType: TextInputType.url,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'La URL del libro es obligatoria';
-                        }
-                        return null;
-                      },
+                      validator: Validators.urlValidator,
                     ),
                     SizedBox(height: screenHeight * 0.01),
                     CustomTextField(
@@ -174,12 +166,7 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
                       icon: Icons.image,
                       controller: _urlImagenController,
                       keyboardType: TextInputType.url,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'La URL de la imagen es obligatoria';
-                        }
-                        return null;
-                      },
+                      validator: Validators.urlValidator,
                     ),
                     SizedBox(height: screenHeight * 0.01),
                     CustomTextField(
@@ -188,28 +175,12 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
                       controller: _descripcionController,
                       keyboardType: TextInputType.multiline,
                       maxLines: 3,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'La descripción es obligatoria';
-                        }
-                        return null;
-                      },
+                      validator: Validators.requiredFieldValidator,
                     ),
                     SizedBox(height: screenHeight * 0.02),
                     CustomButton(
                       text: 'Agregar Libro',
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          registerLibro(
-                            _tituloController.text,
-                            _autorController.text,
-                            _cantidadController.text,
-                            _urlLibroController.text,
-                            _urlImagenController.text,
-                            _descripcionController.text,
-                          );
-                        }
-                      },
+                      onPressed: registerLibro,
                       colorFondo: Colors.redAccent,
                     ),
                   ],

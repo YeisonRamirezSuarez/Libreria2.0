@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-class CustomTextField extends StatelessWidget {
+class CustomTextField extends StatefulWidget {
   final String hintText;
   final IconData icon;
   final bool obscureText;
@@ -8,7 +7,8 @@ class CustomTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
   final TextEditingController controller;
-  final int? maxLines; // Añadido para manejar múltiples líneas
+  final int? maxLines;
+  final int? maxLength;
 
   const CustomTextField({
     required this.hintText,
@@ -18,96 +18,137 @@ class CustomTextField extends StatelessWidget {
     this.suffixIcon,
     this.keyboardType,
     this.validator,
-    this.maxLines = 1, // Valor predeterminado para una sola línea
+    this.maxLines = 1,
+    this.maxLength,
     super.key,
   });
 
   @override
+  _CustomTextFieldState createState() => _CustomTextFieldState();
+}
+
+class _CustomTextFieldState extends State<CustomTextField> {
+  final FocusNode _focusNode = FocusNode();
+  bool _hasError = false;
+  bool _obscureText = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _obscureText = widget.obscureText;
+    _focusNode.addListener(() {
+      if (_focusNode.hasFocus) {
+        setState(() {
+          _hasError = false;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Obtener tamaño de pantalla para hacer el diseño responsivo
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Container(
-      // Aplicar restricciones de tamaño personalizadas
-      width: screenWidth *
-          0.98, // Hacer que el campo ocupe el 98% del ancho de la pantalla
+      width: screenWidth * 0.98,
       constraints: BoxConstraints(
-        minHeight: screenHeight * 0.07, // Altura mínima
-        maxHeight: screenHeight * 0.12, // Altura máxima
+        minHeight: screenHeight * 0.07,
+        maxHeight: screenHeight * 0.12,
       ),
       child: TextFormField(
-        obscureText: obscureText,
-        controller: controller,
-        keyboardType: keyboardType,
-        cursorColor: Colors.redAccent, // Color del cursor
-        maxLines: maxLines, // Establecer el número máximo de líneas
-
+        focusNode: _focusNode,
+        obscureText: _obscureText,
+        controller: widget.controller,
+        keyboardType: widget.keyboardType,
+        cursorColor: Colors.redAccent,
+        maxLines: widget.maxLines,
+        maxLength: widget.maxLength,
         decoration: InputDecoration(
-          labelText: hintText, // Usar labelText en lugar de hintText
+          labelText: widget.hintText,
           labelStyle: const TextStyle(
-            color: Colors.white, // Color del texto de la etiqueta
-            fontSize: 18.0, // Tamaño del texto de la etiqueta
+            color: Colors.white,
+            fontSize: 18.0,
           ),
-          prefixIcon: Icon(icon,
+          prefixIcon: Icon(widget.icon,
               color: Theme.of(context).inputDecorationTheme.prefixIconColor),
-          suffixIcon: suffixIcon != null
-              ? Icon(suffixIcon,
-                  color: Theme.of(context).inputDecorationTheme.suffixIconColor)
-              : null,
-          // Personalizar el borde
+          suffixIcon: widget.obscureText
+              ? IconButton(
+                  icon: Icon(
+                    _obscureText ? Icons.visibility : Icons.visibility_off,
+                    color: Theme.of(context).inputDecorationTheme.suffixIconColor,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscureText = !_obscureText;
+                    });
+                  },
+                )
+              : widget.suffixIcon != null
+                  ? Icon(widget.suffixIcon,
+                      color: Theme.of(context).inputDecorationTheme.suffixIconColor)
+                  : null,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20.0), // Esquinas redondeadas
-            borderSide: const BorderSide(
-              color: Colors.white, // Color del borde
-              width: 2.0, // Grosor del borde
+            borderRadius: BorderRadius.circular(20.0),
+            borderSide: BorderSide(
+              color: _hasError ? Colors.redAccent : Colors.white,
+              width: 2.0,
             ),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(20.0),
-            borderSide: const BorderSide(
-              color: Colors.black, // Color del borde cuando está habilitado
+            borderSide: BorderSide(
+              color: _hasError ? Colors.redAccent : Colors.black,
               width: 2.0,
             ),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(20.0),
             borderSide: const BorderSide(
-              color: Colors.redAccent, // Color del borde cuando está enfocado
+              color: Colors.redAccent,
               width: 1.0,
             ),
           ),
-          // Borde cuando hay un error
           errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20.0), // Esquinas redondeadas
+            borderRadius: BorderRadius.circular(20.0),
             borderSide: const BorderSide(
-              color: Colors.redAccent, // Color del borde cuando hay error
-              width: 3.0, // Grosor del borde cuando hay error
+              color: Colors.redAccent,
+              width: 3.0,
             ),
           ),
-          // Borde cuando está enfocado y hay error
           focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20.0), // Esquinas redondeadas
+            borderRadius: BorderRadius.circular(20.0),
             borderSide: const BorderSide(
-              color: Colors
-                  .redAccent, // Color del borde cuando hay error y está enfocado
-              width: 3.0, // Grosor del borde cuando hay error y está enfocado
+              color: Colors.redAccent,
+              width: 3.0,
             ),
           ),
           contentPadding: EdgeInsets.symmetric(
-            vertical: screenHeight * 0.029, // Aumenta el padding vertical
-            horizontal: screenWidth * 0.04, // Aumenta el padding horizontal
+            vertical: screenHeight * 0.029,
+            horizontal: screenWidth * 0.04,
           ),
-          // Estilo del texto del error
           errorStyle: const TextStyle(
-            color: Colors.redAccent, // Cambia el color del texto de error
-            fontSize: 16.0, // Cambia el tamaño del texto de error
+            color: Colors.redAccent,
+            fontSize: 16.0,
           ),
+          counterText: '', // Esto oculta el contador de caracteres
         ),
         style: const TextStyle(
             color: Colors.white,
-            fontSize: 22.0), // Aumentar el tamaño del texto
-        validator: validator, // Función de validación
+            fontSize: 22.0),
+        validator: (value) {
+          final error = widget.validator?.call(value);
+          setState(() {
+            _hasError = error != null;
+          });
+          return error;
+        },
       ),
     );
   }

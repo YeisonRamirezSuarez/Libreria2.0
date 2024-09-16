@@ -1,17 +1,19 @@
-import 'dart:convert'; // Necesario para decodificar el JSON
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:libreria_app/pages/register_libro_page.dart';
-import 'package:libreria_app/pages/login_page.dart';
-import 'package:libreria_app/pages/update_libro_page.dart';
-import 'package:libreria_app/pages/user_detalle_libro_history.dart';
+import 'package:libreria_app/models/book_model.dart';
+import 'package:libreria_app/models/usuario_model.dart';
+import 'package:libreria_app/services/api_services.dart';
 import 'package:libreria_app/widgets/custom_widgets.dart';
-import 'package:libreria_app/widgets/item_banner_user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../pages/register_libro_page.dart';
+import '../pages/login_page.dart';
+import '../pages/update_libro_page.dart';
+import '../pages/user_detalle_libro_history.dart';
 
 class UserLibrosDisponiblesPage extends StatefulWidget {
-  bool isAdminHistoric;
-  UserLibrosDisponiblesPage({super.key, this.isAdminHistoric = false});
+  final bool isAdminHistoric;
+  final bool isUserHistoric;
+
+  UserLibrosDisponiblesPage({super.key, this.isAdminHistoric = false, this.isUserHistoric = false});
 
   @override
   _UserLibrosDisponiblesPageState createState() =>
@@ -19,36 +21,12 @@ class UserLibrosDisponiblesPage extends StatefulWidget {
 }
 
 class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
-  Future<List<dynamic>> _fetchLibros() async {
-    try {
-      final response = await http
-          .get(Uri.parse('http://192.168.80.20:80/libreria/api/libro.php'));
-
-      print(
-          "Respuesta del servidor: ${response.body}"); // Esto imprimirá la respuesta completa del servidor
-
-      if (response.statusCode == 200) {
-        final decodedData = json.decode(response.body);
-
-        // Comprueba si el objeto decodedData contiene la clave "data" y que es una lista
-        if (decodedData['data'] != null && decodedData['data'] is List) {
-          return decodedData['data']; // Retorna solo la lista de libros
-        } else {
-          throw Exception(
-              'La respuesta no contiene la clave "data" o no es una lista');
-        }
-      } else {
-        throw Exception('Error de servidor: ${response.statusCode}');
-      }
-    } catch (e) {
-      print("Error al hacer la solicitud HTTP: $e");
-      throw Exception(
-          'Error al cargar los libros'); // Mantiene el mensaje de error original
-    }
+  Future<List<Book>> _fetchLibros() async {
+    return ApiService.fetchBooks();
   }
 
   Future<Map<String, String>> _loadUserInfo() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final prefs = await SharedPreferences.getInstance();
     final role = prefs.getString('rol') ?? 'Rol de Usuario';
     final email = prefs.getString('email') ?? 'Nombre del Administrador';
     return {
@@ -76,23 +54,18 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
 
         return GestureDetector(
           onTap: () {
-            FocusScope.of(context)
-                .unfocus(); // Ocultar el teclado si está abierto
+            FocusScope.of(context).unfocus();
           },
           child: SafeArea(
             child: Scaffold(
               body: Column(
                 children: [
                   ItemBannerUser(
-                    estadoUsuario:
-                        role == 'administrador' && !widget.isAdminHistoric
-                            ? true
-                            : false,
+                    estadoUsuario: role == 'administrador' && !widget.isAdminHistoric,
                     seaching: true,
-                    titleBaner:
-                        role == 'administrador' && widget.isAdminHistoric
-                            ? 'Libros Prestados'
-                            : 'Libros Disponibles',
+                    titleBaner: role == 'administrador' && widget.isAdminHistoric
+                        ? 'Libros Prestados'
+                        : 'Libros Disponibles',
                     rolUser: role,
                     nameUser: email,
                     options: role == 'administrador' && !widget.isAdminHistoric
@@ -100,46 +73,61 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
                             Option(
                               icon: const Icon(Icons.book),
                               title: 'Libros Prestados',
-                              destination: UserLibrosDisponiblesPage(
-                                isAdminHistoric: true,
-                              ),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => UserLibrosDisponiblesPage(
+                                      isAdminHistoric: true,
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                             Option(
                               icon: const Icon(Icons.add_box_outlined),
                               title: 'Agregar libro',
-                              destination: RegisterLibroPage(
-                                email: email,
-                                rol: role,
-                              ),
+                              onTap: () async {
+                                final result = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => RegisterLibroPage(
+                                      email: email,
+                                      rol: role,
+                                    ),
+                                  ),
+                                );
+
+                                if (result == true) {
+                                  setState(() {});
+                                }
+                              },
                             ),
                             Option(
                               icon: const Icon(Icons.exit_to_app),
                               title: 'Cerrar Sesión',
-                              destination: LoginScreen(),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => LoginScreen(),
+                                  ),
+                                );
+                              },
                             ),
                           ]
                         : [],
                   ),
                   Expanded(
-                    child: FutureBuilder<List<dynamic>>(
+                    child: FutureBuilder<List<Book>>(
                       future: _fetchLibros(),
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
-                              child: CircularProgressIndicator());
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
                         } else if (snapshot.hasError) {
-                          // Imprime el error en la consola
-                          print('Error: ${snapshot.error}');
-
-                          // Muestra el error en la interfaz de usuario
-                          return Center(
-                            child: Text('Error: ${snapshot.error}'),
-                          );
-                        } else if (!snapshot.hasData ||
-                            snapshot.data!.isEmpty) {
-                          return const Center(
-                              child: Text('No hay libros disponibles'));
+                          return Center(child: Text('Error: ${snapshot.error}'));
+                        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          return const Center(child: Text('No hay libros disponibles'));
                         }
 
                         final libros = snapshot.data!;
@@ -147,8 +135,7 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
                         return Padding(
                           padding: const EdgeInsets.all(10.0),
                           child: GridView.builder(
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
                               crossAxisSpacing: 10,
                               mainAxisSpacing: 10,
@@ -157,14 +144,13 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
                             itemCount: libros.length,
                             itemBuilder: (context, index) {
                               final libro = libros[index];
-                              print(libro['image_url']);
                               return libroCard(
                                 context,
-                                libro['id'],
-                                libro['title'],
-                                libro['author'],
-                                libro['image_url'],
-                                libro['description'],
+                                libro.id!,
+                                libro.title,
+                                libro.author,
+                                libro.imageUrl,
+                                libro.description,
                                 isAdminHistoric: widget.isAdminHistoric,
                                 role: role,
                                 email: email,
@@ -215,7 +201,7 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
               builder: (context) => UpdateLibroPage(
                 email: email,
                 rol: role,
-                libroId: int.parse(id), // Cambia esto según tu implementación
+                libroId: id,
               ),
             ),
           );
