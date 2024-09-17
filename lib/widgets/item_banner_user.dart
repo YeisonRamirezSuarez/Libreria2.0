@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:libreria_app/models/api_response.dart';
 import 'package:libreria_app/pages/user_libros_disponibles_page.dart';
+import 'package:libreria_app/services/api_services.dart';
+import 'package:libreria_app/services/dialog_service.dart';
 
 class ItemBannerUser extends StatefulWidget {
   final bool estadoUsuario; // Estado del usuario
@@ -31,6 +34,7 @@ class ItemBannerUser extends StatefulWidget {
 class _ItemBannerUserState extends State<ItemBannerUser> {
   // FocusNode to control the search bar focus
   late FocusNode _searchFocusNode;
+  final ApiService _apiService = ApiService();
 
   @override
   void initState() {
@@ -51,31 +55,23 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
     super.dispose();
   }
 
-  // Función para eliminar un libro usando el método POST
-  Future<void> _deleteLibro(int idLibro) async {
+  Future<void> _deleteLibro() async {
     try {
-      print(idLibro);
-      final url = Uri.parse(
-          'http://179.12.74.98:2010/New_libreria/api/libro.php?delete=1&id=$idLibro');
-      final response = await http.post(url);
+      final response = await ApiService.deleteLibro(widget.idLibro.toString());
 
-      print(response.body); // Imprime el cuerpo de la respuesta
-      print(response.statusCode); // Imprime el código de estado de la respuesta
-
-      if (response.statusCode == 201) {
-        print("Libro eliminado correctamente");
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Libro eliminado con éxito.')),
+      if (response.success) {
+        DialogService.showSuccessSnackBar(
+            context, 'Libro eliminado exitosamente');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => UserLibrosDisponiblesPage()),
         );
       } else {
-        throw Exception('Error al eliminar el libro: ${response.statusCode}');
+        DialogService.showErrorSnackBar(
+            context, response.error ?? 'Error desconocido');
       }
-    } catch (e) {
-      print("Error al eliminar el libro: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error al eliminar el libro.')),
-      );
+    } catch (error) {
+      DialogService.showErrorSnackBar(context, 'Error de red: $error');
     }
   }
 
@@ -97,7 +93,8 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
                   // User icon
                   const CircleAvatar(
                     radius: 30.0,
-                    backgroundImage: AssetImage('assets/user.png'), // Replace with your image
+                    backgroundImage: AssetImage(
+                        'assets/user.png'), // Replace with your image
                   ),
                   const SizedBox(width: 20.0),
                   Expanded(
@@ -142,11 +139,13 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
                                     iconColor: Colors.white,
                                     title: Text(
                                       option.title,
-                                      style: const TextStyle(color: Colors.white),
+                                      style:
+                                          const TextStyle(color: Colors.white),
                                     ),
                                     onTap: () {
                                       Navigator.pop(context); // Cierra el modal
-                                      option.onTap(); // Ejecuta la función onTap
+                                      option
+                                          .onTap(); // Ejecuta la función onTap
                                     },
                                   );
                                 }).toList(),
@@ -184,7 +183,8 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: GestureDetector(
                       onTap: () {
-                        _searchFocusNode.unfocus(); // Unfocus when clicking the close icon
+                        _searchFocusNode
+                            .unfocus(); // Unfocus when clicking the close icon
                       },
                       child: const Icon(Icons.close),
                     ),
@@ -223,7 +223,7 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
                       ),
                       onPressed: () {
                         // Define the action when the icon is pressed
-                        _deleteLibro(widget.idLibro);
+                        _deleteLibro();
                         Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -251,7 +251,8 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
 class Option {
   final Icon icon;
   final String title;
-  final VoidCallback onTap; // Cambiado de Widget destination a VoidCallback onTap
+  final VoidCallback
+      onTap; // Cambiado de Widget destination a VoidCallback onTap
 
   Option({
     required this.icon,

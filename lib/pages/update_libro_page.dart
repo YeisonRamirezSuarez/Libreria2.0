@@ -1,21 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:libreria_app/models/book_model.dart';
+import 'package:libreria_app/models/usuario_model.dart';
+import 'package:libreria_app/pages/user_libros_disponibles_page.dart';
 import 'package:libreria_app/services/api_services.dart';
+import 'package:libreria_app/services/dialog_service.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/item_banner_user.dart';
 import '../utils/validators.dart';
 
 class UpdateLibroPage extends StatefulWidget {
-  final String email;
+  final String name;
   final String rol;
-  final String libroId;
+  final String cantidadLibro;
+  final Usuario usuario;
 
   const UpdateLibroPage({
     super.key,
-    required this.email,
+    required this.name,
     required this.rol,
-    required this.libroId,
+    required this.cantidadLibro,
+    required this.usuario,
   });
 
   @override
@@ -32,27 +37,9 @@ class _UpdateLibroPageState extends State<UpdateLibroPage> {
   final _urlImagenController = TextEditingController();
   final _descripcionController = TextEditingController();
 
-  Future<void> _fetchLibroData() async {
-    try {
-      final book = await ApiService.fetchBookData(int.parse(widget.libroId));
-      setState(() {
-        _tituloController.text = book.title;
-        _autorController.text = book.author;
-        _cantidadController.text = book.quantity;
-        _urlLibroController.text = book.bookUrl;
-        _urlImagenController.text = book.imageUrl;
-        _descripcionController.text = book.description;
-      });
-    } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al obtener los datos: $error')),
-      );
-    }
-  }
-
   Future<void> _updateLibro() async {
     final book = Book(
-      id: widget.libroId,
+      id: widget.usuario.idBook,
       title: _tituloController.text,
       author: _autorController.text,
       quantity: _cantidadController.text,
@@ -64,26 +51,33 @@ class _UpdateLibroPageState extends State<UpdateLibroPage> {
     try {
       final response = await ApiService.updateBook(book);
       if (response.success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Libro actualizado exitosamente')),
+        DialogService.showSuccessSnackBar(
+            context, 'Libro actualizado exitosamente');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => UserLibrosDisponiblesPage()),
         );
-        Navigator.pop(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('${response.error}')),
         );
+        DialogService.showErrorSnackBar(
+            context, response.error ?? 'Error desconocido');
       }
     } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error de red: $error')),
-      );
+      DialogService.showErrorSnackBar(context, 'Error de red: $error');
     }
   }
 
   @override
   void initState() {
     super.initState();
-    _fetchLibroData();
+    _tituloController.text = widget.usuario.title;
+    _autorController.text = widget.usuario.author;
+    _cantidadController.text = widget.cantidadLibro;
+    _urlLibroController.text = widget.usuario.bookUrl;
+    _urlImagenController.text = widget.usuario.imageUrl;
+    _descripcionController.text = widget.usuario.description;
   }
 
   @override
@@ -123,8 +117,8 @@ class _UpdateLibroPageState extends State<UpdateLibroPage> {
                       deleteBook: true,
                       titleBaner: "Actualizar libro",
                       rolUser: widget.rol,
-                      nameUser: widget.email,
-                      idLibro: int.parse(widget.libroId),
+                      nameUser: widget.name,
+                      idLibro: int.parse(widget.usuario.idBook),
                     ),
                     CustomTextField(
                       hintText: 'Título Libro',

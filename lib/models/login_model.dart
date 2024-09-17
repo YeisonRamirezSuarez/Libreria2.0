@@ -1,17 +1,22 @@
-class UserModel {
-  final String email;
+class UserLogin {
   final String role;
+  final String name;
+  final String phone;
 
-  UserModel({required this.email, required this.role});
+  UserLogin({
+    required this.role,
+    required this.name,
+    required this.phone,
+  });
 
-  factory UserModel.fromJson(Map<String, dynamic> json) {
-    return UserModel(
-      email: json['email'] ?? 'unknown_email',  // Proporciona un valor por defecto si es null
-      role: json['rol'] ?? 'unknown_role',      // Proporciona un valor por defecto si es null
+  factory UserLogin.fromJson(Map<String, dynamic> json) {
+    return UserLogin(
+      role: json['rol'] ?? 'unknown_role',
+      name: json['name'] ?? 'unknown_name',
+      phone: json['phone'] ?? 'unknown_phone',
     );
   }
 }
-
 
 class User {
   final String name;

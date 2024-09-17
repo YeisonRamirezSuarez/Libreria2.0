@@ -3,8 +3,8 @@ import 'package:libreria_app/models/book_model.dart';
 import 'package:libreria_app/models/usuario_model.dart';
 import 'package:libreria_app/pages/user_detalle_libro.dart';
 import 'package:libreria_app/services/api_services.dart';
+import 'package:libreria_app/services/shared_preferences.dart';
 import 'package:libreria_app/widgets/custom_widgets.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../pages/register_libro_page.dart';
 import '../pages/login_page.dart';
 import '../pages/update_libro_page.dart';
@@ -27,22 +27,10 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
     return ApiService.fetchBooks();
   }
 
-  Future<Map<String, String>> _loadUserInfo() async {
-    final prefs = await SharedPreferences.getInstance();
-    final role = prefs.getString('rol') ?? 'Rol de Usuario';
-    final email = prefs.getString('email') ?? 'Nombre del Administrador';
-    //final name = prefs.getString('name') ?? 'Nombre del Administrador';
-    //final phone = prefs.getString('phone') ?? 'Nombre del Administrador'; //para obtener la info del usuario backend
-    return {
-      'role': role,
-      'email': email,
-    };
-  }
-
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<Map<String, String>>(
-      future: _loadUserInfo(),
+      future: LoadUserInfo(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -55,6 +43,8 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
         final data = snapshot.data!;
         final role = data['role']!;
         final email = data['email']!;
+        final name = data['name']!;
+        final phone = data['phone']!;
 
         return GestureDetector(
           onTap: () {
@@ -73,7 +63,7 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
                             ? 'Libros Prestados'
                             : 'Libros Disponibles',
                     rolUser: role,
-                    nameUser: email,
+                    nameUser: name,
                     options: role == 'administrador' && !widget.isAdminHistoric
                         ? [
                             Option(
@@ -99,7 +89,7 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => RegisterLibroPage(
-                                      email: email,
+                                      name: name,
                                       rol: role,
                                     ),
                                   ),
@@ -139,7 +129,11 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
                         } else if (!snapshot.hasData ||
                             snapshot.data!.isEmpty) {
                           return const Center(
-                            child: Text('No hay libros disponibles'),
+                            child: Text('No hay libros disponibles',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                )),
                           );
                         }
 
@@ -158,17 +152,26 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
                             itemCount: libros.length,
                             itemBuilder: (context, index) {
                               final libro = libros[index];
+
                               return libroCard(
                                 context,
-                                libro.id!,
-                                libro.title,
-                                libro.author,
-                                libro.imageUrl,
-                                libro.description,
+                                Usuario(
+                                  idBook: libro.id.toString(),
+                                  title: libro.title,
+                                  author: libro.author,
+                                  bookUrl: libro.bookUrl,
+                                  imageUrl: libro.imageUrl,
+                                  description: libro.description,
+                                  date: '',
+                                  emailUser: email,
+                                  nameUser: name,
+                                  phoneUser: phone,
+                                ),
                                 isAdminHistoric: widget.isAdminHistoric,
                                 isUserHistoric: widget.isUserHistoric,
                                 role: role,
-                                email: email,
+                                name: name,
+                                cantidad: libro.quantity,
                               );
                             },
                           ),
@@ -185,12 +188,15 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
     );
   }
 
-  Widget libroCard(BuildContext context, String id, String titulo, String autor,
-      String imageUrl, String descripcion,
-      {bool isAdminHistoric = false,
-      bool isUserHistoric = false,
-      required String role,
-      required String email}) {
+  Widget libroCard(
+    BuildContext context,
+    Usuario usuario, {
+    bool isAdminHistoric = false,
+    bool isUserHistoric = false,
+    required String role,
+    required String name,
+    required String cantidad,
+  }) {
     return GestureDetector(
       onTap: () {
         if (isAdminHistoric) {
@@ -198,15 +204,15 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
             context,
             MaterialPageRoute(
               builder: (context) => BookDetailHistoryPage(
-                imageUrl: imageUrl,
-                bookTitle: titulo,
-                bookAuthor: autor,
-                bookDescription: descripcion,
+                imageUrl: usuario.imageUrl,
+                bookTitle: usuario.title,
+                bookAuthor: usuario.author,
+                bookDescription: usuario.description,
                 userName: 'Karl',
                 userPhone: '300112548',
                 userEmail: 'karl@upb.com',
                 role: role,
-                email: email,
+                name: name,
               ),
             ),
           );
@@ -215,9 +221,10 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
             context,
             MaterialPageRoute(
               builder: (context) => UpdateLibroPage(
-                email: email,
+                name: name,
                 rol: role,
-                libroId: id,
+                cantidadLibro: cantidad,
+                usuario: usuario,
               ),
             ),
           );
@@ -226,21 +233,10 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
             context,
             MaterialPageRoute(
               builder: (context) => BookDetailPage(
-                usuario: Usuario(
-                  idBook: id.toString(),
-                  title: titulo,
-                  author: autor,
-                  bookUrl: imageUrl,
-                  imageUrl: imageUrl,
-                  description: descripcion,
-                  date: '',
-                  emailUser: email,
-                  nameUser: '',
-                  phoneUser: '',
-                ),
+                usuario: usuario,
                 titleBaner: 'Prestar Libro',
                 role: role,
-                correo: email,
+                name: name,
                 cantButton: 1,
               ),
             ),
@@ -267,13 +263,13 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               ImageWidget(
-                imageUrl: imageUrl,
+                imageUrl: usuario.imageUrl,
                 height: 150.0,
                 width: 150.0,
               ),
               const SizedBox(height: 8.0),
               Text(
-                titulo,
+                usuario.title,
                 style: const TextStyle(
                   fontSize: 16.0,
                   fontWeight: FontWeight.bold,
@@ -283,7 +279,7 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
               ),
               const SizedBox(height: 4.0),
               Text(
-                autor,
+                usuario.author,
                 style: TextStyle(
                   fontSize: 14.0,
                   color: Colors.grey[600],

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:libreria_app/models/api_response.dart';
 import 'package:libreria_app/models/book_model.dart';
 import 'package:libreria_app/models/usuario_model.dart';
@@ -24,8 +25,10 @@ class ApiService {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('email', email);
         await prefs.setString('rol', data['rol']);
+        await prefs.setString('name', data['name']);
+        await prefs.setString('phone', data['phone']);
 
-        return ApiResponseLogin(user: UserModel.fromJson(data));
+        return ApiResponseLogin(user: UserLogin.fromJson(data));
       } else if (response.statusCode == 400) {
         final data = json.decode(response.body);
         return ApiResponseLogin(error: data['rol'] ?? 'Error no controlado');
@@ -134,8 +137,10 @@ class ApiService {
 
     final response = await http.get(url);
 
+    print(response.body);
+    print(response.statusCode);
 
-    if (response.statusCode == 201) {
+    if (response.statusCode == 200) {
       final data = json.decode(response.body);
 
       if (data['data'] is List) {
@@ -154,18 +159,36 @@ class ApiService {
 
   static Future<ApiResponse> prestarLibro(Usuario usuario) async {
     final url = Uri.parse('${AppConfig.baseUrl}/peticiones.php?prestar=1');
-    
+
+    // Format the current date
+    //10 ene. 2023, 14:58 este es el formato que necesito
+    final DateFormat formatter = DateFormat('dd MMMM yyyy, hh:mm a');
+    final updatedUsuario = Usuario(
+      idBook: usuario.idBook,
+      title: usuario.title,
+      author: usuario.author,
+      bookUrl: usuario.bookUrl,
+      imageUrl: usuario.imageUrl,
+      description: usuario.description,
+      date: formatter.format(DateTime.now()), // Update date here
+      emailUser: usuario.emailUser,
+      nameUser: usuario.nameUser,
+      phoneUser: usuario.phoneUser,
+    );
+
+    print(updatedUsuario.toJson());
+
     try {
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: json.encode(usuario.toJson()),
+        body: json.encode(updatedUsuario.toJson()),
       );
 
       print(response.body);
       print(response.statusCode);
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 201 || response.statusCode == 205) {
         final responseBody = json.decode(response.body);
         return ApiResponse.fromJson(responseBody);
       } else {
@@ -176,5 +199,51 @@ class ApiService {
     }
   }
 
- 
+  static Future<ApiResponseDelete> deleteLibroPrestado(Usuario usuario) async {
+    final url = Uri.parse(
+        '${AppConfig.baseUrl}/peticiones.php?delete=1&id=${usuario.id}');
+    print(usuario.id);
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      print(response.body);
+      print(response.statusCode);
+
+      if (response.statusCode == 201) {
+        final responseBody = json.decode(response.body);
+        return ApiResponseDelete.fromJson(responseBody);
+      } else {
+        throw Exception('Error al prestar libro: ${response.statusCode}');
+      }
+    } catch (error) {
+      throw Exception('Error de red: $error');
+    }
+  }
+
+  static Future<ApiResponseDelete> deleteLibro(String idLibro) async {
+    final url =
+        Uri.parse('${AppConfig.baseUrl}/libro.php?delete=1&id=$idLibro');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      print(response.body);
+      print(response.statusCode);
+
+      if (response.statusCode == 201) {
+        final responseBody = json.decode(response.body);
+        return ApiResponseDelete.fromJson(responseBody);
+      } else {
+        throw Exception('Error al prestar libro: ${response.statusCode}');
+      }
+    } catch (error) {
+      throw Exception('Error de red: $error');
+    }
+  }
 }

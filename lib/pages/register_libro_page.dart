@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:libreria_app/models/book_model.dart';
+import 'package:libreria_app/pages/user_libros_disponibles_page.dart';
 import 'package:libreria_app/services/api_services.dart';
+import 'package:libreria_app/services/dialog_service.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/item_banner_user.dart';
 import '../utils/validators.dart';
 
 class RegisterLibroPage extends StatefulWidget {
-  final String email;
+  final String name;
   final String rol;
 
-  const RegisterLibroPage({super.key, required this.email, required this.rol});
+  const RegisterLibroPage({super.key, required this.name, required this.rol});
 
   @override
   _RegisterLibroPageState createState() => _RegisterLibroPageState();
@@ -84,19 +86,19 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
       final response = await ApiService.registerBook(book);
 
       if (response.success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registro del libro exitoso')),
+        DialogService.showSuccessSnackBar(
+            context, 'Libro registrado exitosamente');
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => UserLibrosDisponiblesPage()),
         );
-        Navigator.pop(context);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(response.error ?? 'Error desconocido')),
-        );
+        DialogService.showErrorSnackBar(
+            context, response.error ?? 'Error desconocido');
       }
     } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error de red: $error')),
-      );
+      DialogService.showErrorSnackBar(context, 'Error de red: $error');
     }
   }
 
@@ -126,7 +128,7 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
                       seaching: false,
                       titleBaner: "Agregar libro",
                       rolUser: widget.rol,
-                      nameUser: widget.email,
+                      nameUser: widget.name,
                     ),
                     CustomTextField(
                       hintText: 'Título Libro',

@@ -1,96 +1,140 @@
 import 'package:flutter/material.dart';
 
 class DialogService {
+  static bool _isDialogShowing = false;
+  static bool _isSnackBarShowing = false;
+  static ScaffoldFeatureController<SnackBar, SnackBarClosedReason>?
+      _snackBarController;
+
   static void showErrorDialog(BuildContext context, String message) {
+    if (_isDialogShowing) return;
+
+    _isDialogShowing = true;
+
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: const Text('Error'),
         content: Text(message),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () {
+              _isDialogShowing = false;
+              Navigator.of(context).pop();
+            },
             child: const Text('OK', style: TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),
-    );
+    ).then((_) {
+      _isDialogShowing = false;
+    });
   }
 
   static void showInfoDialog(BuildContext context, String message) {
+    if (_isDialogShowing) return;
+
+    _isDialogShowing = true;
+
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: const Text('Información'),
         content: Text(message),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () {
+              _isDialogShowing = false;
+              Navigator.of(context).pop();
+            },
             child: const Text('OK', style: TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),
-    );
+    ).then((_) {
+      _isDialogShowing = false;
+    });
   }
 
   static void showErrorSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
+    if (_isSnackBarShowing) return;
+
+    _isSnackBarShowing = true;
+
+    _snackBarController = ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        //alinear al centro el contenido
         content: Container(
           alignment: Alignment.center,
-          width: double.infinity, 
-          height: 70,// Ocupa todo el ancho de la pantalla
-          padding:
-              EdgeInsets.symmetric(horizontal: 16.0), // Espaciado horizontal
+          width: double.infinity,
+          height: 70,
+          padding: EdgeInsets.symmetric(horizontal: 16.0),
           child: Text(
             message,
             style: TextStyle(
               color: Colors.white,
-              fontSize: 16.0, // Tamaño del texto más grande
-              // Texto en negrita
+              fontSize: 16.0,
             ),
-            textAlign: TextAlign.center, // Centra el texto
+            textAlign: TextAlign.center,
           ),
         ),
-        backgroundColor: Colors.redAccent, // Color de fondo rojo
+        backgroundColor: Colors.redAccent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10),),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(10),
+            topRight: Radius.circular(10),
+          ),
         ),
-        //aqui ponerle un 
-      
-        
-        duration: Duration(seconds: 5), // Duración del SnackBar
-        behavior: SnackBarBehavior.floating, // Comportamiento flotante
-        padding: EdgeInsets.zero, // Elimina el padding por defecto
-        margin: EdgeInsets.all(0), // Elimina el margen por defecto
+        duration: Duration(seconds: 5),
+        behavior: SnackBarBehavior.floating,
+        padding: EdgeInsets.zero,
+        margin: EdgeInsets.all(0),
       ),
     );
+
+    _snackBarController?.closed.then((_) {
+      _isSnackBarShowing = false;
+    });
   }
 
   static void showSuccessSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
+    if (_isSnackBarShowing) return;
+
+    _isSnackBarShowing = true;
+
+    _snackBarController = ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Container(
-          width: double.infinity, // Ocupa todo el ancho de la pantalla
-          padding:
-              EdgeInsets.symmetric(horizontal: 16.0), // Espaciado horizontal
+          alignment: Alignment.center,
+          width: double.infinity,
+          height: 70,
+          padding: EdgeInsets.symmetric(horizontal: 16.0),
           child: Text(
             message,
             style: TextStyle(
               color: Colors.white,
-              fontSize: 18.0, // Tamaño del texto más grande
-              fontWeight: FontWeight.bold, // Texto en negrita
+              fontSize: 16.0,
             ),
-            textAlign: TextAlign.center, // Centra el texto
+            textAlign: TextAlign.center,
           ),
         ),
-        backgroundColor: Colors.green, // Color de fondo verde para éxito
-        duration: Duration(seconds: 3), // Duración del SnackBar
-        behavior: SnackBarBehavior.floating, // Comportamiento flotante
-        padding: EdgeInsets.zero, // Elimina el padding por defecto
-        margin: EdgeInsets.all(0), // Elimina el margen por defecto
+        backgroundColor: Colors.green,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(10),
+            topRight: Radius.circular(10),
+          ),
+        ),
+        duration: Duration(seconds: 5),
+        behavior: SnackBarBehavior.floating,
+        padding: EdgeInsets.zero,
+        margin: EdgeInsets.all(0),
       ),
     );
+
+    _snackBarController?.closed.then((_) {
+      _isSnackBarShowing = false;
+    });
   }
 }

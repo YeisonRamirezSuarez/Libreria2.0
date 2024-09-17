@@ -20,6 +20,7 @@ class _ImageWidgetState extends State<ImageWidget> {
   late Image image;
   bool _isLoading = true;
   bool _hasError = false;
+  ImageStreamListener? _imageStreamListener;
 
   @override
   void initState() {
@@ -30,20 +31,33 @@ class _ImageWidgetState extends State<ImageWidget> {
 
   void _loadImage() {
     final ImageStream stream = image.image.resolve(ImageConfiguration.empty);
-    final ImageStreamListener listener = ImageStreamListener(
+    _imageStreamListener = ImageStreamListener(
       (ImageInfo info, bool synchronousCall) {
-        setState(() {
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       },
       onError: (exception, stackTrace) {
-        setState(() {
-          _isLoading = false;
-          _hasError = true;
-        });
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _hasError = true;
+          });
+        }
       },
     );
-    stream.addListener(listener);
+    stream.addListener(_imageStreamListener!);
+  }
+
+  @override
+  void dispose() {
+    final ImageStream stream = image.image.resolve(ImageConfiguration.empty);
+    if (_imageStreamListener != null) {
+      stream.removeListener(_imageStreamListener!);
+    }
+    super.dispose();
   }
 
   @override

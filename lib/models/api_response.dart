@@ -1,19 +1,19 @@
 import 'package:libreria_app/models/login_model.dart';
 
 class ApiResponseLogin {
-  final UserModel? user;
+  final UserLogin? user;
   final String? error;
 
   ApiResponseLogin({this.user, this.error});
 }
-
 
 class ApiResponseRegistrer {
   final bool success;
   final String message;
   final String? error;
 
-  ApiResponseRegistrer({required this.success, required this.message, this.error});
+  ApiResponseRegistrer(
+      {required this.success, required this.message, this.error});
 
   factory ApiResponseRegistrer.fromJson(Map<String, dynamic> json) {
     return ApiResponseRegistrer(
@@ -33,12 +33,29 @@ class ApiResponse {
 
   factory ApiResponse.fromJson(Map<String, dynamic> json) {
     return ApiResponse(
-      success: json['mensaje'] == 'success register',
+      success: json['mensaje'] == 'success lend book',
       message: json['mensaje'] ?? '',
       error: json['error'],
     );
   }
 }
+
+class ApiResponseDelete {
+  final bool success;
+  final String message;
+  final String? error;
+
+  ApiResponseDelete({required this.success, required this.message, this.error});
+
+  factory ApiResponseDelete.fromJson(Map<String, dynamic> json) {
+    return ApiResponseDelete(
+      success: json['mensaje'] == 'success delete book',
+      message: json['mensaje'] ?? '',
+      error: json['error'],
+    );
+  }
+}
+
 
 class ApiResponseUpdate {
   final bool success;
@@ -55,6 +72,3 @@ class ApiResponseUpdate {
     );
   }
 }
-
-
-

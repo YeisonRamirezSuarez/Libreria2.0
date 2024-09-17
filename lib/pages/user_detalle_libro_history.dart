@@ -13,7 +13,7 @@ class BookDetailHistoryPage extends StatelessWidget {
   final String userEmail;
 
   final String role;
-  final String email;
+  final String name;
 
   const BookDetailHistoryPage({
     super.key,
@@ -25,7 +25,7 @@ class BookDetailHistoryPage extends StatelessWidget {
     required this.userPhone,
     required this.userEmail,
     required this.role,
-    required this.email,
+    required this.name,
   });
 
   @override
@@ -41,7 +41,7 @@ class BookDetailHistoryPage extends StatelessWidget {
               seaching: false,
               titleBaner: "Mi Libro",
               rolUser: role,
-              nameUser: email,
+              nameUser: name,
             ),
 
             Expanded(

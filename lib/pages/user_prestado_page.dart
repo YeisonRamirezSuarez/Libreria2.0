@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:libreria_app/models/usuario_model.dart';
 import 'package:libreria_app/services/api_services.dart';
+import 'package:libreria_app/services/shared_preferences.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:libreria_app/pages/login_page.dart';
 import 'package:libreria_app/pages/user_detalle_libro.dart';
@@ -15,20 +16,10 @@ class UserPrestadoPage extends StatelessWidget {
         email); // Assuming this method fetches the books
   }
 
-  Future<Map<String, String>> _loadUserInfo() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final role = prefs.getString('rol') ?? 'Rol de Usuario';
-    final email = prefs.getString('email') ?? 'Nombre del Administrador';
-    return {
-      'role': role,
-      'email': email,
-    };
-  }
-
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<Map<String, String>>(
-      future: _loadUserInfo(),
+      future: LoadUserInfo(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -41,6 +32,8 @@ class UserPrestadoPage extends StatelessWidget {
         final data = snapshot.data!;
         final role = data['role']!;
         final email = data['email']!;
+        final name = data['name']!;
+        final phone = data['phone']!;
 
         return GestureDetector(
           onTap: () {
@@ -57,7 +50,7 @@ class UserPrestadoPage extends StatelessWidget {
                     seaching: true,
                     titleBaner: "Mis Libros Prestados",
                     rolUser: role,
-                    nameUser: email,
+                    nameUser: name,
                     options: [
                       Option(
                         icon: const Icon(Icons.exit_to_app),
@@ -89,7 +82,10 @@ class UserPrestadoPage extends StatelessWidget {
                         } else if (!snapshot.hasData ||
                             snapshot.data!.isEmpty) {
                           return const Center(
-                              child: Text('No hay libros prestados.'));
+                              child: Text(
+                            'No hay libros prestados.',
+                            style: TextStyle(color: Colors.white, fontSize: 20),
+                          ));
                         }
 
                         final books = snapshot.data!;
@@ -111,7 +107,7 @@ class UserPrestadoPage extends StatelessWidget {
                                         titleBaner: "Mis Libros Prestados",
                                         usuario: book,
                                         role: role,
-                                        correo: email,
+                                        name: name,
                                         cantButton: 2,
                                       ),
                                     ),

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:libreria_app/models/usuario_model.dart';
+import 'package:libreria_app/pages/user_prestado_page.dart';
 import 'package:libreria_app/services/api_services.dart';
+import 'package:libreria_app/services/dialog_service.dart';
 import 'package:libreria_app/widgets/custom_widgets.dart';
-
 
 class BookDetailPage extends StatelessWidget {
   final Usuario usuario;
   final String role;
-  final String correo;
+  final String name;
   final String titleBaner;
   final int cantButton;
 
@@ -15,7 +16,7 @@ class BookDetailPage extends StatelessWidget {
     super.key,
     required this.usuario,
     required this.role,
-    required this.correo,
+    required this.name,
     required this.titleBaner,
     required this.cantButton,
   });
@@ -32,7 +33,7 @@ class BookDetailPage extends StatelessWidget {
               seaching: false,
               titleBaner: titleBaner,
               rolUser: role,
-              nameUser: correo,
+              nameUser: name,
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -64,25 +65,24 @@ class BookDetailPage extends StatelessWidget {
                           fontStyle: FontStyle.italic,
                         ),
                       ),
-                      if (usuario.date.isNotEmpty)
-                        ...[
-                          const SizedBox(height: 10),
-                          Text(
-                            'Fecha: ${usuario.date}',
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14,
-                            ),
-                            textAlign: TextAlign.center,
+                      if (usuario.date.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Text(
+                          'Fecha: ${usuario.date}',
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
                           ),
-                        ],
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                       const SizedBox(height: 20),
                       const Divider(
                         color: Colors.redAccent,
                         thickness: 2,
                       ),
                       const SizedBox(height: 40),
-                      _buildButtons(context),
+                      _buildButtons(context, usuario),
                     ],
                   ),
                 ),
@@ -94,7 +94,7 @@ class BookDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildButtons(BuildContext context) {
+  Widget _buildButtons(BuildContext context, Usuario usuario) {
     if (cantButton == 2) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -104,9 +104,26 @@ class BookDetailPage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: CustomButton(
                 text: 'Devolver',
-                onPressed: () {
-                  // Acción para el botón "Devolver"
-                  print('Libro devuelto');
+                onPressed: () async {
+                  try {
+                    final response = await ApiService.deleteLibroPrestado(usuario);
+
+                    if (response.success) {
+                      DialogService.showSuccessSnackBar(
+                          context, 'Libro devuleto exitosamente');
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => UserPrestadoPage()),
+                      );
+                    } else {
+                      DialogService.showErrorSnackBar(
+                          context, response.error ?? 'Error desconocido');
+                    }
+                  } catch (error) {
+                    DialogService.showErrorSnackBar(
+                        context, 'Error de red: $error');
+                  }
                 },
                 dimensioneBoton: 60.0,
                 colorFondo: Colors.redAccent,
@@ -136,10 +153,21 @@ class BookDetailPage extends StatelessWidget {
           text: 'Prestar',
           onPressed: () async {
             try {
-              await ApiService.prestarLibro(usuario);
-              print('Libro prestado');
-            } catch (e) {
-              print('Error al prestar libro: $e');
+              final response = await ApiService.prestarLibro(usuario);
+
+              if (response.success) {
+                DialogService.showSuccessSnackBar(
+                    context, 'Libro prestado exitosamente');
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => UserPrestadoPage()),
+                );
+              } else {
+                DialogService.showErrorSnackBar(
+                    context, response.error ?? 'Error desconocido');
+              }
+            } catch (error) {
+              DialogService.showErrorSnackBar(context, 'Error de red: $error');
             }
           },
           dimensioneBoton: 60.0,
