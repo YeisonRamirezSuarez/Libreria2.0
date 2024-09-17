@@ -5,6 +5,9 @@ import 'package:libreria_app/services/dialog_service.dart';
 import 'package:libreria_app/utils/validators.dart';
 import 'package:libreria_app/widgets/custom_widgets.dart';
 
+import 'dart:async'; 
+import 'dart:io';   
+
 class RegisterUserPage extends StatefulWidget {
   const RegisterUserPage({super.key});
 
@@ -73,18 +76,30 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
       password: _passwordController.text,
     );
 
-    try {
-      final response = await ApiService.registerUser(user);
+   try {
+      // Usar un timeout para la solicitud HTTP
+      final response =
+          await ApiService.registerUser(user).timeout(Duration(seconds: 5));
 
       if (response.success) {
-        DialogService.showErrorSnackBar(context, 'Registro exitoso');
+        DialogService.showSuccessSnackBar(context, 'Registro exitoso');
         Navigator.pop(context);
       } else {
         DialogService.showErrorSnackBar(
             context, response.error ?? 'Error desconocido');
       }
-    } catch (error) {
-      DialogService.showErrorSnackBar(context, 'Error de red: $error');
+    } on TimeoutException catch (_) {
+      // Manejar el caso de timeout
+      DialogService.showErrorSnackBar(context,
+          'El tiempo de espera para la conexión ha expirado. Por favor, informa que el servicio está apagado o no responde.');
+    } on SocketException catch (_) {
+      // Manejar el caso de problemas de red
+      DialogService.showErrorSnackBar(context,
+          'No se pudo conectar con el servidor. Por favor, verifique su conexión a Internet.');
+    } catch (e) {
+      // Manejar cualquier otro tipo de excepción
+      DialogService.showErrorSnackBar(
+          context, 'Se ha producido un error inesperado: ${e.toString()}');
     }
   }
 

@@ -25,11 +25,31 @@ class _ImageWidgetState extends State<ImageWidget> {
   @override
   void initState() {
     super.initState();
-    image = Image.network(widget.imageUrl);
+    // Initialize the image with a default image in case of invalid URL
+    image = Image.network(widget.imageUrl, errorBuilder: (context, error, stackTrace) {
+      setState(() {
+        _isLoading = false;
+        _hasError = true;
+      });
+      return const Icon(
+        Icons.error,
+        color: Colors.red,
+        size: 100.0,
+      );
+    });
     _loadImage();
   }
 
   void _loadImage() {
+    // Check if the URL is valid
+    if (widget.imageUrl.isEmpty || !Uri.parse(widget.imageUrl).isAbsolute) {
+      setState(() {
+        _isLoading = false;
+        _hasError = true;
+      });
+      return;
+    }
+
     final ImageStream stream = image.image.resolve(ImageConfiguration.empty);
     _imageStreamListener = ImageStreamListener(
       (ImageInfo info, bool synchronousCall) {

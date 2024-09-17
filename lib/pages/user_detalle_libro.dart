@@ -4,6 +4,7 @@ import 'package:libreria_app/pages/user_prestado_page.dart';
 import 'package:libreria_app/services/api_services.dart';
 import 'package:libreria_app/services/dialog_service.dart';
 import 'package:libreria_app/widgets/custom_widgets.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class BookDetailPage extends StatelessWidget {
   final Usuario usuario;
@@ -20,6 +21,13 @@ class BookDetailPage extends StatelessWidget {
     required this.titleBaner,
     required this.cantButton,
   });
+
+  Future<void> _launchURL(String url) async {
+    if (!await launchUrl(Uri.parse(url))) {
+      // print('No se pudo abrir la URL: $url');
+      throw Exception('No se pudo abrir la URL: $url');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,11 +56,12 @@ class BookDetailPage extends StatelessWidget {
                         height: 200.0,
                         width: 200.0,
                       ),
+                      const SizedBox(height: 10),
                       Text(
                         usuario.title,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 24,
+                          fontSize: 28,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -61,10 +70,20 @@ class BookDetailPage extends StatelessWidget {
                         usuario.author,
                         style: TextStyle(
                           color: Colors.grey[400],
-                          fontSize: 16,
+                          fontSize: 22,
                           fontStyle: FontStyle.italic,
                         ),
                       ),
+                      const SizedBox(height: 5),
+                      Text(
+                        usuario.description,
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 18,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
                       if (usuario.date.isNotEmpty) ...[
                         const SizedBox(height: 10),
                         Text(
@@ -106,15 +125,17 @@ class BookDetailPage extends StatelessWidget {
                 text: 'Devolver',
                 onPressed: () async {
                   try {
-                    final response = await ApiService.deleteLibroPrestado(usuario);
+                    final response =
+                        await ApiService.deleteLibroPrestado(usuario);
 
                     if (response.success) {
+                      print('Libro devuelto exitosamente');
                       DialogService.showSuccessSnackBar(
                           context, 'Libro devuleto exitosamente');
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => UserPrestadoPage()),
+                            builder: (context) => const UserPrestadoPage()),
                       );
                     } else {
                       DialogService.showErrorSnackBar(
@@ -136,8 +157,7 @@ class BookDetailPage extends StatelessWidget {
               child: CustomButton(
                 text: 'Ver',
                 onPressed: () {
-                  // Acción para el botón "Ver"
-                  print('Ver libro');
+                  _launchURL(usuario.bookUrl);
                 },
                 dimensioneBoton: 60.0,
                 colorFondo: Colors.redAccent,
@@ -160,7 +180,8 @@ class BookDetailPage extends StatelessWidget {
                     context, 'Libro prestado exitosamente');
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => UserPrestadoPage()),
+                  MaterialPageRoute(
+                      builder: (context) => const UserPrestadoPage()),
                 );
               } else {
                 DialogService.showErrorSnackBar(
@@ -175,8 +196,8 @@ class BookDetailPage extends StatelessWidget {
         ),
       );
     } else {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 8.0),
         child: Text(
           'Número de botones no válido',
           style: TextStyle(color: Colors.redAccent, fontSize: 16),

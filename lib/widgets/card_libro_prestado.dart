@@ -8,17 +8,17 @@ class BookCard extends StatelessWidget {
   final String date; // Fecha del préstamo
 
   const BookCard({
-    Key? key,
+    super.key,
     required this.imageUrl,
     required this.title,
     required this.author,
     required this.date,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(30),
+      padding: const EdgeInsets.all(16), // Ajusta el padding según sea necesario
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
       decoration: BoxDecoration(
         color: Colors.grey[300],
@@ -47,7 +47,6 @@ class BookCard extends StatelessWidget {
 
 class _BookDetail extends StatelessWidget {
   const _BookDetail({
-    super.key,
     required this.title,
     required this.author,
     required this.date,
@@ -78,6 +77,8 @@ class _BookDetail extends StatelessWidget {
               fontWeight: FontWeight.w600,
               color: Colors.black,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis, // Truncar con puntos suspensivos si es necesario
           ),
           const SizedBox(height: 10),
           // Autor del libro
@@ -94,6 +95,8 @@ class _BookDetail extends StatelessWidget {
               fontSize: 16,
               color: Colors.black,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis, // Truncar con puntos suspensivos si es necesario
           ),
           const SizedBox(height: 10),
           // Fecha de préstamo

@@ -1,44 +1,65 @@
 import 'package:flutter/material.dart';
 import 'package:libreria_app/models/usuario_model.dart';
-import 'package:libreria_app/services/api_services.dart';
-import 'package:libreria_app/services/shared_preferences.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:libreria_app/pages/login_page.dart';
 import 'package:libreria_app/pages/user_detalle_libro.dart';
 import 'package:libreria_app/pages/user_libros_disponibles_page.dart';
+import 'package:libreria_app/services/api_services.dart';
+import 'package:libreria_app/services/shared_preferences.dart';
 import 'package:libreria_app/widgets/custom_widgets.dart';
 
-class UserPrestadoPage extends StatelessWidget {
+class UserPrestadoPage extends StatefulWidget {
   const UserPrestadoPage({super.key});
 
-  Future<List<Usuario>> _fetchLibrosUser(String email) async {
-    return ApiService.fetchUsuariosHistorial(
-        email); // Assuming this method fetches the books
+  @override
+  _UserPrestadoPageState createState() => _UserPrestadoPageState();
+}
+
+class _UserPrestadoPageState extends State<UserPrestadoPage> {
+  Map<String, String>? _userInfo;
+  List<Usuario>? _books;
+  List<Usuario> _filteredBooks = [];
+  bool _isDataLoaded = false;
+
+  Future<void> _loadData() async {
+    // Cargar la información del usuario
+    _userInfo = await LoadUserInfo();
+    final String email = _userInfo!['email']!;
+    
+    // Cargar los libros del usuario
+    final books = await ApiService.fetchBookForUser(email);
+    setState(() {
+      _books = books;
+      _filteredBooks = books;
+      _isDataLoaded = true;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData(); // Cargar los datos cuando se inicializa el estado
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Map<String, String>>(
-      future: LoadUserInfo(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+    return Builder(
+      builder: (context) {
+        if (!_isDataLoaded) {
           return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData) {
+        }
+
+        if (_userInfo == null) {
           return const Center(child: Text('No data found'));
         }
 
-        final data = snapshot.data!;
-        final role = data['role']!;
-        final email = data['email']!;
-        final name = data['name']!;
-        final phone = data['phone']!;
+        final role = _userInfo!['role']!;
+        final email = _userInfo!['email']!;
+        final name = _userInfo!['name']!;
+        final phone = _userInfo!['phone']!;
 
         return GestureDetector(
           onTap: () {
-            // Ocultar el teclado al tocar en cualquier parte de la pantalla
-            FocusScope.of(context).unfocus();
+            FocusScope.of(context).unfocus(); // Ocultar el teclado al tocar en cualquier parte de la pantalla
           },
           child: SafeArea(
             child: Scaffold(
@@ -62,74 +83,43 @@ class UserPrestadoPage extends StatelessWidget {
                               builder: (context) => const LoginScreen(),
                             ),
                           );
-                        }, // Reemplaza con tu pantalla
+                        },
                       ),
                     ],
                   ),
-
-                  // Expanded widget to make the list scrollable and fill available space
                   Expanded(
-                    child: FutureBuilder<List<Usuario>>(
-                      future: _fetchLibrosUser(email),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
-                              child: CircularProgressIndicator());
-                        } else if (snapshot.hasError) {
-                          return Center(
-                              child: Text('Error: ${snapshot.error}'));
-                        } else if (!snapshot.hasData ||
-                            snapshot.data!.isEmpty) {
-                          return const Center(
-                              child: Text(
-                            'No hay libros prestados.',
-                            style: TextStyle(color: Colors.white, fontSize: 20),
-                          ));
-                        }
-
-                        final books = snapshot.data!;
-
-                        return ListView.builder(
-                          itemCount: books.length,
-                          itemBuilder: (context, index) {
-                            final book =
-                                books[index]; // Assuming books is List<Usuario>
-                            return Padding(
-                              padding: const EdgeInsets.all(2.0),
-                              child: GestureDetector(
-                                onTap: () {
-                                  // Navegar a la pantalla de detalles al tocar
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => BookDetailPage(
-                                        titleBaner: "Mis Libros Prestados",
-                                        usuario: book,
-                                        role: role,
-                                        name: name,
-                                        cantButton: 2,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: BookCard(
-                                  imageUrl:
-                                      book.imageUrl, // Update as per your model
-                                  title: book.title, // Update as per your model
-                                  author:
-                                      book.author, // Update as per your model
-                                  date: book.date, // Update as per your model
+                    child: ListView.builder(
+                      itemCount: _filteredBooks.length,
+                      itemBuilder: (context, index) {
+                        final book = _filteredBooks[index];
+                        return Padding(
+                          padding: const EdgeInsets.all(2.0),
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => BookDetailPage(
+                                    titleBaner: "Mi Libro",
+                                    usuario: book,
+                                    role: role,
+                                    name: name,
+                                    cantButton: 2,
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
+                              );
+                            },
+                            child: BookCard(
+                              imageUrl: book.imageUrl,
+                              title: book.title,
+                              author: book.author,
+                              date: book.date,
+                            ),
+                          ),
                         );
                       },
                     ),
                   ),
-
-                  // Divider lines
                   Container(
                     width: double.infinity,
                     height: 3.0,
@@ -149,8 +139,6 @@ class UserPrestadoPage extends StatelessWidget {
                     margin: const EdgeInsets.only(bottom: 10.0),
                     color: Colors.redAccent,
                   ),
-
-                  // Button at the bottom of the screen
                   SafeArea(
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),

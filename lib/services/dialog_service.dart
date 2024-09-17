@@ -69,10 +69,10 @@ class DialogService {
           alignment: Alignment.center,
           width: double.infinity,
           height: 70,
-          padding: EdgeInsets.symmetric(horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Text(
             message,
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 16.0,
             ),
@@ -80,16 +80,16 @@ class DialogService {
           ),
         ),
         backgroundColor: Colors.redAccent,
-        shape: RoundedRectangleBorder(
+        shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(10),
             topRight: Radius.circular(10),
           ),
         ),
-        duration: Duration(seconds: 5),
+        duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
         padding: EdgeInsets.zero,
-        margin: EdgeInsets.all(0),
+        margin: const EdgeInsets.all(0),
       ),
     );
 
@@ -109,10 +109,10 @@ class DialogService {
           alignment: Alignment.center,
           width: double.infinity,
           height: 70,
-          padding: EdgeInsets.symmetric(horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Text(
             message,
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 16.0,
             ),
@@ -120,16 +120,16 @@ class DialogService {
           ),
         ),
         backgroundColor: Colors.green,
-        shape: RoundedRectangleBorder(
+        shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(10),
             topRight: Radius.circular(10),
           ),
         ),
-        duration: Duration(seconds: 5),
+        duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
         padding: EdgeInsets.zero,
-        margin: EdgeInsets.all(0),
+        margin: const EdgeInsets.all(0),
       ),
     );
 

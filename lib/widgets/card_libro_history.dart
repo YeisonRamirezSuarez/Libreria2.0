@@ -6,7 +6,7 @@ class BookHistoryCardPage extends StatelessWidget {
   final String bookTitle;
   final String bookAuthor;
   final String bookDescription;
-  final List<Usuario1>
+  final List<DataUsuario>
       usuarios; // Cambiamos aquí para aceptar una lista de usuarios
 
   const BookHistoryCardPage({
@@ -120,7 +120,7 @@ class HistoryLibros extends StatelessWidget {
     required this.usuarios,
   });
 
-  final List<Usuario1> usuarios;
+  final List<DataUsuario> usuarios;
 
   @override
   Widget build(BuildContext context) {
@@ -136,7 +136,7 @@ class HistoryLibros extends StatelessWidget {
           // Header row with titles
           Container(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-            child: Row(
+            child: const Row(
               mainAxisAlignment: MainAxisAlignment
                   .spaceBetween, // Distribuye espacio entre los elementos
               children: [
@@ -145,7 +145,7 @@ class HistoryLibros extends StatelessWidget {
                   child: Text(
                     'Nombre',
                     textAlign: TextAlign.center, // Centra el texto
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
@@ -156,7 +156,7 @@ class HistoryLibros extends StatelessWidget {
                   child: Text(
                     'Teléfono',
                     textAlign: TextAlign.center, // Centra el texto
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
@@ -167,7 +167,7 @@ class HistoryLibros extends StatelessWidget {
                   child: Text(
                     'Correo Electrónico',
                     textAlign: TextAlign.center, // Centra el texto
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
@@ -201,7 +201,6 @@ class HistoryLibros extends StatelessWidget {
 // Widget para mostrar la información de cada usuario
 class _infoUserLibroPrestado extends StatelessWidget {
   const _infoUserLibroPrestado({
-    super.key,
     required this.userName,
     required this.userPhone,
     required this.userEmail,
@@ -263,10 +262,10 @@ class _infoUserLibroPrestado extends StatelessWidget {
 }
 
 // Definir la clase para un usuario
-class Usuario1 {
+class DataUsuario {
   final String nombre;
   final String telefono;
   final String email;
 
-  Usuario1({required this.nombre, required this.telefono, required this.email});
+  DataUsuario({required this.nombre, required this.telefono, required this.email});
 }

@@ -28,16 +28,16 @@ class Usuario {
   factory Usuario.fromJson(Map<String, dynamic> json) {
     return Usuario(
       id: json['id'] as String?,
-      idBook: json['id_book'] as String,
-      title: json['title'] as String,
-      author: json['author'] as String,
-      bookUrl: json['book_url'] as String,
-      imageUrl: json['image_url'] as String,
-      description: json['description'] as String,
-      date: json['date'] as String,
-      emailUser: json['email_user'] as String,
-      nameUser: json['name_user'] as String,
-      phoneUser: json['phone_user'] as String,
+      idBook: json['id_book'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      author: json['author'] as String? ?? '',
+      bookUrl: json['book_url'] as String? ?? '',
+      imageUrl: json['image_url'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      date: json['date'] as String? ?? '',
+      emailUser: json['email_user'] as String? ?? '',
+      nameUser: json['name_user'] as String? ?? '',
+      phoneUser: json['phone_user'] as String? ?? '',
     );
   }
 

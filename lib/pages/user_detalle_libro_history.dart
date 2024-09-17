@@ -1,29 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/widgets/card_libro_history.dart';
-// Importa tus clases para ItemBannerUser y CustomButton si no lo has hecho ya
-import 'package:libreria_app/widgets/custom_widgets.dart'; // Asegúrate de importar donde tengas tu ItemBannerUser y CustomButton
+import 'package:libreria_app/models/login_model.dart';
+import 'package:libreria_app/models/usuario_model.dart';
+import 'package:libreria_app/services/api_services.dart';
+import 'package:libreria_app/widgets/custom_widgets.dart';
 
 class BookDetailHistoryPage extends StatelessWidget {
-  final String imageUrl;
-  final String bookTitle;
-  final String bookAuthor;
-  final String bookDescription;
-  final String userName;
-  final String userPhone;
-  final String userEmail;
-
+  final Usuario usuario;
   final String role;
   final String name;
 
   const BookDetailHistoryPage({
     super.key,
-    required this.imageUrl,
-    required this.bookTitle,
-    required this.bookAuthor,
-    required this.bookDescription,
-    required this.userName,
-    required this.userPhone,
-    required this.userEmail,
+    required this.usuario,
     required this.role,
     required this.name,
   });
@@ -35,7 +23,6 @@ class BookDetailHistoryPage extends StatelessWidget {
         backgroundColor: Colors.black,
         body: Column(
           children: [
-            // Aquí agregamos el ItemBannerUser en la parte superior
             ItemBannerUser(
               estadoUsuario: false,
               seaching: false,
@@ -43,29 +30,55 @@ class BookDetailHistoryPage extends StatelessWidget {
               rolUser: role,
               nameUser: name,
             ),
-
             Expanded(
               child: SingleChildScrollView(
-                  child: BookHistoryCardPage(
-                imageUrl: imageUrl,
-                bookTitle: bookTitle,
-                bookAuthor: bookAuthor,
-                bookDescription: bookDescription,
-                usuarios: [
-                  Usuario1(
-                      nombre: 'Karl',
-                      telefono: '3001112548',
-                      email: 'karl@wposs.com'),
-                  Usuario1(
-                      nombre: 'Ana',
-                      telefono: '3002223333',
-                      email: 'ana@gmail.com'),
-                  Usuario1(
-                      nombre: 'Luis',
-                      telefono: '3003334444',
-                      email: 'luis@hotmail.com'),
-                ],
-              )),
+                child: Column(
+                  children: [
+                    FutureBuilder<List<UsuarioPrestado>>(
+                      future: ApiService.fetchUsuariosConLibrosPrestados(
+                          usuario.idBook),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        } else if (snapshot.hasError) {
+                          return Center(
+                              child: Text('Error: ${snapshot.error}'));
+                        } else if (!snapshot.hasData ||
+                            snapshot.data!.isEmpty) {
+                          return const Center(
+                            child: Text('No hay usuarios con libros prestados',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                )),
+                          );
+                        }
+
+                        final usuarios = snapshot.data!;
+
+                        // Convertir cada Usuario a un Widget
+                        final usuarioWidgets = usuarios
+                            .map((usuario) => DataUsuario(
+                                  nombre: usuario.nameUser,
+                                  telefono: usuario.phoneUser,
+                                  email: usuario.emailUser,
+                                ))
+                            .toList();
+
+                        return BookHistoryCardPage(
+                          imageUrl: usuario.imageUrl,
+                          bookTitle: usuario.title,
+                          bookAuthor: usuario.author,
+                          bookDescription: usuario.description,
+                          usuarios: usuarioWidgets, // Pasar la lista de widgets
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
