@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 class CustomTextField extends StatefulWidget {
   final String hintText;
   final IconData icon;
@@ -8,6 +9,7 @@ class CustomTextField extends StatefulWidget {
   final String? Function(String?)? validator;
   final TextEditingController controller;
   final int? maxLines;
+  final int? minLines;
   final int? maxLength;
 
   const CustomTextField({
@@ -20,6 +22,7 @@ class CustomTextField extends StatefulWidget {
     this.validator,
     this.maxLines = 1,
     this.maxLength,
+    this.minLines,
     super.key,
   });
 
@@ -28,27 +31,13 @@ class CustomTextField extends StatefulWidget {
 }
 
 class _CustomTextFieldState extends State<CustomTextField> {
-  final FocusNode _focusNode = FocusNode();
-  bool _hasError = false;
-  bool _obscureText = false;
+  late bool _obscureText;
+  String? _errorText;
 
   @override
   void initState() {
     super.initState();
     _obscureText = widget.obscureText;
-    _focusNode.addListener(() {
-      if (_focusNode.hasFocus) {
-        setState(() {
-          _hasError = false;
-        });
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _focusNode.dispose();
-    super.dispose();
   }
 
   @override
@@ -62,93 +51,103 @@ class _CustomTextFieldState extends State<CustomTextField> {
         minHeight: screenHeight * 0.07,
         maxHeight: screenHeight * 0.12,
       ),
-      child: TextFormField(
-        focusNode: _focusNode,
-        obscureText: _obscureText,
-        controller: widget.controller,
-        keyboardType: widget.keyboardType,
-        cursorColor: Colors.redAccent,
-        maxLines: widget.maxLines,
-        maxLength: widget.maxLength,
-        decoration: InputDecoration(
-          labelText: widget.hintText,
-          labelStyle: const TextStyle(
-            color: Colors.white,
-            fontSize: 18.0,
-          ),
-          prefixIcon: Icon(widget.icon,
-              color: Theme.of(context).inputDecorationTheme.prefixIconColor),
-          suffixIcon: widget.obscureText
-              ? IconButton(
-                  icon: Icon(
-                    _obscureText ? Icons.visibility : Icons.visibility_off,
-                    color: Theme.of(context).inputDecorationTheme.suffixIconColor,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _obscureText = !_obscureText;
-                    });
-                  },
-                )
-              : widget.suffixIcon != null
-                  ? Icon(widget.suffixIcon,
-                      color: Theme.of(context).inputDecorationTheme.suffixIconColor)
-                  : null,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20.0),
-            borderSide: BorderSide(
-              color: _hasError ? Colors.redAccent : Colors.white,
-              width: 2.0,
+      child: Stack(
+        children: [
+          TextFormField(
+            obscureText: _obscureText,
+            controller: widget.controller,
+            keyboardType: widget.keyboardType,
+            cursorColor: Colors.redAccent,
+            maxLines: widget.maxLines,
+            minLines: widget.minLines,
+            maxLength: widget.maxLength,
+            decoration: InputDecoration(
+              labelText: widget.hintText,
+              labelStyle: const TextStyle(
+                color: Colors.white,
+                fontSize: 18.0,
+              ),
+              prefixIcon: Icon(widget.icon, color: Theme.of(context).inputDecorationTheme.prefixIconColor),
+              suffixIcon: widget.obscureText
+                  ? IconButton(
+                      icon: Icon(
+                        _obscureText ? Icons.visibility : Icons.visibility_off,
+                        color: Theme.of(context).inputDecorationTheme.suffixIconColor,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscureText = !_obscureText;
+                        });
+                      },
+                    )
+                  : widget.suffixIcon != null
+                      ? Icon(widget.suffixIcon, color: Theme.of(context).inputDecorationTheme.suffixIconColor)
+                      : null,
+              border: InputBorder.none,
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(
+                  color: _errorText != null ? Colors.redAccent : Colors.white,
+                  width: 2.0,
+                ),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: const BorderSide(
+                  color: Colors.redAccent,
+                  width: 2.0,
+                ),
+              ),
+              errorBorder: UnderlineInputBorder(
+                borderSide: const BorderSide(
+                  color: Colors.redAccent,
+                  width: 2.0,
+                ),
+              ),
+              focusedErrorBorder: UnderlineInputBorder(
+                borderSide: const BorderSide(
+                  color: Colors.redAccent,
+                  width: 2.0,
+                ),
+              ),
+              contentPadding: EdgeInsets.symmetric(
+                vertical: screenHeight * 0.02,
+                horizontal: screenWidth * 0.04,
+              ),
+              errorStyle: const TextStyle(
+                color: Colors.redAccent,
+                fontSize: 14.0,
+              ),
+              counterText: '', // Hide the character counter
             ),
+            style: const TextStyle(color: Colors.white, fontSize: 16.0),
+            onChanged: (value) {
+              final error = widget.validator?.call(value);
+              setState(() {
+                _errorText = error;
+              });
+            },
+            validator: (value) {
+              final error = widget.validator?.call(value);
+              setState(() {
+                _errorText = error;
+              });
+              return null; // Return null here to let custom error handling manage the display
+            },
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20.0),
-            borderSide: BorderSide(
-              color: _hasError ? Colors.redAccent : Colors.black,
-              width: 2.0,
+          if (_errorText != null) // Show error message inside the TextFormField
+            Positioned(
+              right: 10.0,
+              top: 0.0,
+              child: Text(
+                _errorText!,
+                style: const TextStyle(
+                  color: Colors.redAccent,
+                  fontSize: 12.0,
+                ),
+              ),
             ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20.0),
-            borderSide: const BorderSide(
-              color: Colors.redAccent,
-              width: 1.0,
-            ),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20.0),
-            borderSide: const BorderSide(
-              color: Colors.redAccent,
-              width: 3.0,
-            ),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20.0),
-            borderSide: const BorderSide(
-              color: Colors.redAccent,
-              width: 3.0,
-            ),
-          ),
-          contentPadding: EdgeInsets.symmetric(
-            vertical: screenHeight * 0.029,
-            horizontal: screenWidth * 0.04,
-          ),
-          errorStyle: const TextStyle(
-            color: Colors.redAccent,
-            fontSize: 16.0,
-          ),
-          counterText: '', // Esto oculta el contador de caracteres
-        ),
-        style: const TextStyle(
-            color: Colors.white,
-            fontSize: 22.0),
-        validator: (value) {
-          final error = widget.validator?.call(value);
-          setState(() {
-            _hasError = error != null;
-          });
-          return error;
-        },
+            
+        ],
+        
       ),
     );
   }
@@ -168,7 +167,6 @@ class HeaderText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Obtener tamaño de pantalla para hacer el diseño responsivo
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Column(
@@ -182,13 +180,11 @@ class HeaderText extends StatelessWidget {
           ),
           textAlign: TextAlign.center,
         ),
-        SizedBox(
-            height: screenWidth *
-                0.02), // Ajuste del espacio entre el título y descripciones
+        SizedBox(height: screenWidth * 0.02), // Ajuste del espacio entre el título y descripciones
         Text(
           description1,
           style: TextStyle(
-            fontSize: screenWidth * 0.045, // Ajustar tamaño de texto
+            fontSize: screenWidth * 0.045,
             color: const Color(0xFF636060),
           ),
           textAlign: TextAlign.center,
@@ -196,7 +192,7 @@ class HeaderText extends StatelessWidget {
         Text(
           description2,
           style: TextStyle(
-            fontSize: screenWidth * 0.045, // Ajustar tamaño de texto
+            fontSize: screenWidth * 0.045,
             color: const Color(0xFF636060),
           ),
           textAlign: TextAlign.center,

@@ -19,6 +19,9 @@ class ApiService {
         body: json.encode({'email': email, 'password': password}),
       );
 
+      print(response.body);
+      print(response.statusCode);
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final prefs = await SharedPreferences.getInstance();

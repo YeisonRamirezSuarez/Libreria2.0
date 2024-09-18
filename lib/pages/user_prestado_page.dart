@@ -8,7 +8,8 @@ import 'package:libreria_app/services/shared_preferences.dart';
 import 'package:libreria_app/widgets/custom_widgets.dart';
 
 class UserPrestadoPage extends StatefulWidget {
-  const UserPrestadoPage({super.key});
+  final isPrincipal;
+  const UserPrestadoPage({super.key, this.isPrincipal = false});
 
   @override
   _UserPrestadoPageState createState() => _UserPrestadoPageState();
@@ -19,18 +20,31 @@ class _UserPrestadoPageState extends State<UserPrestadoPage> {
   List<Usuario>? _books;
   List<Usuario> _filteredBooks = [];
   bool _isDataLoaded = false;
+  String _searchQuery = '';
 
   Future<void> _loadData() async {
     // Cargar la información del usuario
     _userInfo = await LoadUserInfo();
     final String email = _userInfo!['email']!;
-    
     // Cargar los libros del usuario
     final books = await ApiService.fetchBookForUser(email);
     setState(() {
       _books = books;
       _filteredBooks = books;
       _isDataLoaded = true;
+    });
+  }
+
+  // Función para realizar la búsqueda
+  void _filterBooks(String query) {
+    setState(() {
+      _searchQuery = query.toLowerCase();
+      _filteredBooks = _books!.where((book) {
+        final titleLower = book.title.toLowerCase();
+        final authorLower = book.author.toLowerCase();
+        return titleLower.contains(_searchQuery) ||
+            authorLower.contains(_searchQuery);
+      }).toList();
     });
   }
 
@@ -53,13 +67,12 @@ class _UserPrestadoPageState extends State<UserPrestadoPage> {
         }
 
         final role = _userInfo!['role']!;
-        final email = _userInfo!['email']!;
         final name = _userInfo!['name']!;
-        final phone = _userInfo!['phone']!;
 
         return GestureDetector(
           onTap: () {
-            FocusScope.of(context).unfocus(); // Ocultar el teclado al tocar en cualquier parte de la pantalla
+            FocusScope.of(context)
+                .unfocus(); // Ocultar el teclado al tocar en cualquier parte de la pantalla
           },
           child: SafeArea(
             child: Scaffold(
@@ -67,6 +80,7 @@ class _UserPrestadoPageState extends State<UserPrestadoPage> {
               body: Column(
                 children: <Widget>[
                   ItemBannerUser(
+                    isPrincipal: widget.isPrincipal,
                     estadoUsuario: true,
                     seaching: true,
                     titleBaner: "Mis Libros Prestados",
@@ -86,6 +100,7 @@ class _UserPrestadoPageState extends State<UserPrestadoPage> {
                         },
                       ),
                     ],
+                    searchCallback: _filterBooks, // Callback de búsqueda
                   ),
                   Expanded(
                     child: ListView.builder(
@@ -93,7 +108,7 @@ class _UserPrestadoPageState extends State<UserPrestadoPage> {
                       itemBuilder: (context, index) {
                         final book = _filteredBooks[index];
                         return Padding(
-                          padding: const EdgeInsets.all(2.0),
+                          padding: const EdgeInsets.symmetric(vertical: 0.5),
                           child: GestureDetector(
                             onTap: () {
                               Navigator.push(
@@ -120,50 +135,64 @@ class _UserPrestadoPageState extends State<UserPrestadoPage> {
                       },
                     ),
                   ),
-                  Container(
-                    width: double.infinity,
-                    height: 3.0,
-                    color: Colors.redAccent,
-                  ),
-                  const SizedBox(height: 10.0),
-                  Container(
-                    width: double.infinity,
-                    height: 3.0,
-                    margin: const EdgeInsets.only(top: 2.0),
-                    color: Colors.redAccent,
-                  ),
-                  const SizedBox(height: 4.0),
-                  Container(
-                    width: double.infinity,
-                    height: 4.0,
-                    margin: const EdgeInsets.only(bottom: 10.0),
-                    color: Colors.redAccent,
-                  ),
-                  SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: CustomButton(
-                        text: 'Prestar',
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => UserLibrosDisponiblesPage(
-                                isUserHistoric: true,
-                              ),
-                            ),
-                          );
-                        },
-                        colorFondo: Colors.redAccent,
-                      ),
-                    ),
-                  ),
                 ],
               ),
+              bottomNavigationBar: _buildBottomContent(context),
             ),
           ),
         );
       },
     );
   }
+}
+
+Widget _buildBottomContent(BuildContext context) {
+  // Este método crea el contenido fijo en la parte inferior
+  return Container(
+    margin: EdgeInsets.symmetric(horizontal: 12),
+    color: Colors.black, // Configura el color de fondo si es necesario
+    child: Column(
+      mainAxisSize: MainAxisSize.min, // Solo ocupa el espacio necesario
+      children: [
+        Container(
+          width: double.infinity,
+          height: 3.0,
+          color: Colors.redAccent,
+        ),
+        const SizedBox(height: 10.0),
+        Container(
+          width: double.infinity,
+          height: 3.0,
+          margin: const EdgeInsets.only(top: 2.0),
+          color: Colors.redAccent,
+        ),
+        const SizedBox(height: 4.0),
+        Container(
+          width: double.infinity,
+          height: 4.0,
+          margin: const EdgeInsets.only(bottom: 10.0),
+          color: Colors.redAccent,
+        ),
+        SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: CustomButton(
+              text: 'Prestar',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const UserLibrosDisponiblesPage(
+                      isUserHistoric: true,
+                    ),
+                  ),
+                );
+              },
+              colorFondo: Colors.redAccent,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }

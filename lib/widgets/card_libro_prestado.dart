@@ -17,30 +17,41 @@ class BookCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16), // Ajusta el padding según sea necesario
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-      decoration: BoxDecoration(
-        color: Colors.grey[300],
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Row(
-        children: [
-          // Imagen del libro
-          ImageWidget(
-            imageUrl: imageUrl,
-            width: 100,
-            height: 150,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Ajuste dinámico basado en el ancho del contenedor
+        double imageWidth = constraints.maxWidth * 0.3;
+        double imageHeight = imageWidth * 1.2;
+        double padding = constraints.maxWidth * 0.05;
+
+        return Container(
+          padding: EdgeInsets.all(padding),
+          margin: EdgeInsets.symmetric(horizontal: padding, vertical: padding / 2),
+          decoration: BoxDecoration(
+            color: Colors.grey[300],
+            borderRadius: BorderRadius.circular(15),
           ),
-          const SizedBox(width: 20),
-          // Información del libro
-          _BookDetail(
-            title: title,
-            author: author,
-            date: date,
+          child: Row(
+            children: [
+              // Imagen del libro
+              ImageWidget(
+                imageUrl: imageUrl,
+                width: imageWidth,
+                height: imageHeight,
+              ),
+              SizedBox(width: padding),
+              // Información del libro
+              _BookDetail(
+                title: title,
+                author: author,
+                date: date,
+                titleFontSize: constraints.maxWidth * 0.05,
+                detailFontSize: constraints.maxWidth * 0.04,
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -50,11 +61,15 @@ class _BookDetail extends StatelessWidget {
     required this.title,
     required this.author,
     required this.date,
+    required this.titleFontSize,
+    required this.detailFontSize,
   });
 
   final String title;
   final String author;
   final String date;
+  final double titleFontSize;
+  final double detailFontSize;
 
   @override
   Widget build(BuildContext context) {
@@ -72,15 +87,15 @@ class _BookDetail extends StatelessWidget {
           ),
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 16,
+            style: TextStyle(
+              fontSize: titleFontSize,
               fontWeight: FontWeight.w600,
               color: Colors.black,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis, // Truncar con puntos suspensivos si es necesario
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: titleFontSize * 0.3),
           // Autor del libro
           const Text(
             'Autor:',
@@ -91,14 +106,14 @@ class _BookDetail extends StatelessWidget {
           ),
           Text(
             author,
-            style: const TextStyle(
-              fontSize: 16,
+            style: TextStyle(
+              fontSize: detailFontSize,
               color: Colors.black,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis, // Truncar con puntos suspensivos si es necesario
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: detailFontSize * 0.3),
           // Fecha de préstamo
           const Text(
             'Fecha Préstamo:',
@@ -109,10 +124,12 @@ class _BookDetail extends StatelessWidget {
           ),
           Text(
             date,
-            style: const TextStyle(
-              fontSize: 16,
+            style: TextStyle(
+              fontSize: detailFontSize,
               color: Colors.black,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

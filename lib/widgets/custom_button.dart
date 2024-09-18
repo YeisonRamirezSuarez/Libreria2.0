@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 
 class CustomButton extends StatelessWidget {
   final String text;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final Color colorFondo;
   final double dimensioneBoton;
 
   const CustomButton({
     required this.text,
-    required this.onPressed,
+    this.onPressed,
     super.key,
     this.colorFondo = const Color(0xFF333333),
     this.dimensioneBoton = 80.0,

@@ -3,10 +3,7 @@ import 'package:libreria_app/models/book_model.dart';
 import 'package:libreria_app/pages/user_libros_disponibles_page.dart';
 import 'package:libreria_app/services/api_services.dart';
 import 'package:libreria_app/services/dialog_service.dart';
-import '../widgets/custom_text_field.dart';
-import '../widgets/custom_button.dart';
-import '../widgets/item_banner_user.dart';
-import '../utils/validators.dart';
+import 'package:libreria_app/widgets/custom_widgets.dart';
 
 class RegisterLibroPage extends StatefulWidget {
   final String name;
@@ -20,8 +17,6 @@ class RegisterLibroPage extends StatefulWidget {
 
 class _RegisterLibroPageState extends State<RegisterLibroPage> {
   final _formKey = GlobalKey<FormState>();
-
-  // Controladores para los campos de texto
   final _tituloController = TextEditingController();
   final _autorController = TextEditingController();
   final _cantidadController = TextEditingController();
@@ -29,30 +24,6 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
   final _urlImagenController = TextEditingController();
   final _descripcionController = TextEditingController();
   AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
-  late final List<TextEditingController> _controllers;
-
-  @override
-  void initState() {
-    super.initState();
-
-    // Inicializar los controladores
-    _controllers = [
-      _tituloController,
-      _autorController,
-      _cantidadController,
-      _urlLibroController,
-      _urlImagenController,
-    ];
-
-    // Agregar los listeners a cada controlador
-    for (var controller in _controllers) {
-      controller.addListener(() {
-        if (_autoValidateMode == AutovalidateMode.always) {
-          setState(() {});
-        }
-      });
-    }
-  }
 
   @override
   void dispose() {
@@ -91,7 +62,7 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => UserLibrosDisponiblesPage()),
+          MaterialPageRoute(builder: (context) => const UserLibrosDisponiblesPage(isPrincipal: true,)),
         );
       } else {
         DialogService.showErrorSnackBar(
@@ -105,7 +76,6 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
 
     return GestureDetector(
       onTap: () {
@@ -117,76 +87,30 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
             physics: const BouncingScrollPhysics(),
             child: Padding(
               padding: EdgeInsets.all(screenWidth * 0.01),
-              child: Form(
-                key: _formKey,
-                autovalidateMode: _autoValidateMode,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    ItemBannerUser(
-                      estadoUsuario: false,
-                      seaching: false,
-                      titleBaner: "Agregar libro",
-                      rolUser: widget.rol,
-                      nameUser: widget.name,
-                    ),
-                    CustomTextField(
-                      hintText: 'Título Libro',
-                      icon: Icons.book,
-                      controller: _tituloController,
-                      keyboardType: TextInputType.text,
-                      validator: Validators.requiredFieldValidator,
-                    ),
-                    SizedBox(height: screenHeight * 0.01),
-                    CustomTextField(
-                      hintText: 'Autor Libro',
-                      icon: Icons.person,
-                      controller: _autorController,
-                      keyboardType: TextInputType.text,
-                      validator: Validators.requiredFieldValidator,
-                    ),
-                    SizedBox(height: screenHeight * 0.01),
-                    CustomTextField(
-                      hintText: 'Cantidad Libro',
-                      icon: Icons.format_list_numbered,
-                      maxLength: 3,
-                      controller: _cantidadController,
-                      keyboardType: TextInputType.number,
-                      validator: Validators.numberValidator,
-                    ),
-                    SizedBox(height: screenHeight * 0.01),
-                    CustomTextField(
-                      hintText: 'URL Libro',
-                      icon: Icons.link,
-                      controller: _urlLibroController,
-                      keyboardType: TextInputType.url,
-                      validator: Validators.urlValidator,
-                    ),
-                    SizedBox(height: screenHeight * 0.01),
-                    CustomTextField(
-                      hintText: 'Imagen Libro',
-                      icon: Icons.image,
-                      controller: _urlImagenController,
-                      keyboardType: TextInputType.url,
-                      validator: Validators.urlValidator,
-                    ),
-                    SizedBox(height: screenHeight * 0.01),
-                    CustomTextField(
-                      hintText: 'Descripción Libro',
-                      icon: Icons.description,
-                      controller: _descripcionController,
-                      keyboardType: TextInputType.multiline,
-                      maxLines: 3,
-                      validator: Validators.requiredFieldValidator,
-                    ),
-                    SizedBox(height: screenHeight * 0.02),
-                    CustomButton(
-                      text: 'Agregar Libro',
-                      onPressed: registerLibro,
-                      colorFondo: Colors.redAccent,
-                    ),
-                  ],
-                ),
+              child: Column(
+                children: [
+                  ItemBannerUser(
+                    estadoUsuario: false,
+                    seaching: false,
+                    titleBaner: "Agregar libro",
+                    rolUser: widget.rol,
+                    nameUser: widget.name,
+                  ),
+                  FormLibro(
+                    formKey: _formKey,
+                    autoValidateMode: _autoValidateMode,
+                    tituloController: _tituloController,
+                    autorController: _autorController,
+                    cantidadController: _cantidadController,
+                    urlLibroController: _urlLibroController,
+                    urlImagenController: _urlImagenController,
+                    descripcionController: _descripcionController,
+                    onPressed: registerLibro,
+                    name: widget.name,
+                    rol: widget.rol,
+                    botonTitle: "Agregar Libro",
+                  ),
+                ],
               ),
             ),
           ),

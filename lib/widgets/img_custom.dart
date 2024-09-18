@@ -20,28 +20,27 @@ class _ImageWidgetState extends State<ImageWidget> {
   late Image image;
   bool _isLoading = true;
   bool _hasError = false;
-  ImageStreamListener? _imageStreamListener;
 
   @override
   void initState() {
     super.initState();
-    // Initialize the image with a default image in case of invalid URL
-    image = Image.network(widget.imageUrl, errorBuilder: (context, error, stackTrace) {
-      setState(() {
-        _isLoading = false;
-        _hasError = true;
-      });
-      return const Icon(
-        Icons.error,
-        color: Colors.red,
-        size: 100.0,
-      );
-    });
+    // Inicializamos la imagen
     _loadImage();
   }
 
+  @override
+  void didUpdateWidget(ImageWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Si la URL de la imagen cambia, volvemos a cargar la imagen
+    if (widget.imageUrl != oldWidget.imageUrl) {
+      _isLoading = true;
+      _hasError = false;
+      _loadImage();
+    }
+  }
+
   void _loadImage() {
-    // Check if the URL is valid
+    // Validamos que la URL sea válida
     if (widget.imageUrl.isEmpty || !Uri.parse(widget.imageUrl).isAbsolute) {
       setState(() {
         _isLoading = false;
@@ -50,34 +49,43 @@ class _ImageWidgetState extends State<ImageWidget> {
       return;
     }
 
-    final ImageStream stream = image.image.resolve(ImageConfiguration.empty);
-    _imageStreamListener = ImageStreamListener(
-      (ImageInfo info, bool synchronousCall) {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
-      },
-      onError: (exception, stackTrace) {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-            _hasError = true;
-          });
-        }
+    image = Image.network(
+      widget.imageUrl,
+      fit: BoxFit.contain,
+      width: widget.width * 1.2,
+      height: widget.height * 1.1, 
+      errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
+        // Muestra el ícono de error personalizado en caso de fallo
+        return const Icon(
+          Icons.error,
+          color: Colors.red,
+          size: 120.0,
+        );
       },
     );
-    stream.addListener(_imageStreamListener!);
-  }
 
-  @override
-  void dispose() {
-    final ImageStream stream = image.image.resolve(ImageConfiguration.empty);
-    if (_imageStreamListener != null) {
-      stream.removeListener(_imageStreamListener!);
-    }
-    super.dispose();
+    // Intentamos cargar la imagen
+    final ImageStream stream = image.image.resolve(const ImageConfiguration());
+    stream.addListener(
+      ImageStreamListener(
+        (ImageInfo imageInfo, bool synchronousCall) {
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+              _hasError = false;
+            });
+          }
+        },
+        onError: (dynamic error, StackTrace? stackTrace) {
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+              _hasError = true;
+            });
+          }
+        },
+      ),
+    );
   }
 
   @override
@@ -85,23 +93,14 @@ class _ImageWidgetState extends State<ImageWidget> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(8.0),
       child: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
+          ? const Center(child: CircularProgressIndicator())
           : _hasError
-              ? const Center(
-                  child: Icon(
-                    Icons.error,
-                    color: Colors.red,
-                    size: 100.0,
-                  ),
+              ? const Icon(
+                  Icons.error,
+                  color: Colors.red,
+                  size: 120.0,
                 )
-              : Image.network(
-                  widget.imageUrl,
-                  fit: BoxFit.contain,
-                  width: widget.width,
-                  height: widget.height,
-                ),
+              : image,
     );
   }
 }

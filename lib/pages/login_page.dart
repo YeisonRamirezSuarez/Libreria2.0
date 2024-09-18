@@ -23,30 +23,32 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   final ApiService _apiService = ApiService();
   AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
-  late final List<TextEditingController> _controllers;
+  late final FocusNode _emailFocusNode;
+  late final FocusNode _passwordFocusNode;
 
   @override
   void initState() {
     super.initState();
-    _controllers = [
-      _emailController,
-      _passwordController,
-    ];
+    _emailFocusNode = FocusNode();
+    _passwordFocusNode = FocusNode();
 
-    for (var controller in _controllers) {
-      controller.addListener(() {
-        if (_autoValidateMode == AutovalidateMode.always) {
-          setState(() {});
-        }
-      });
-    }
+    _emailController.addListener(_updateButtonState);
+    _passwordController.addListener(_updateButtonState);
   }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _emailFocusNode.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
+  }
+
+  void _updateButtonState() {
+    if (mounted) {
+      setState(() {}); // Update the button state
+    }
   }
 
   Future<void> _login() async {
@@ -61,7 +63,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final password = _passwordController.text;
 
     try {
-      // Usar un timeout para la solicitud HTTP
       final response = await _apiService
           .login(email, password)
           .timeout(Duration(seconds: 5));
@@ -73,15 +74,12 @@ class _LoginScreenState extends State<LoginScreen> {
             context, response.error ?? 'Error desconocido');
       }
     } on TimeoutException catch (_) {
-      // Manejar el caso de timeout
       DialogService.showInfoDialog(context,
-          'El tiempo de espera para la conexión ha expirado. Por favor, informa que el servicio esta apagado o no responde.');
+          'El tiempo de espera para la conexión ha expirado. Por favor, informa que el servicio está apagado o no responde.');
     } on SocketException catch (_) {
-      // Manejar el caso de problemas de red
       DialogService.showInfoDialog(context,
           'No se pudo conectar con el servidor. Por favor, verifique su conexión a Internet.');
     } catch (e) {
-      // Manejar cualquier otro tipo de excepción
       DialogService.showInfoDialog(
           context, 'Se ha producido un error inesperado: ${e.toString()}');
     }
@@ -91,12 +89,12 @@ class _LoginScreenState extends State<LoginScreen> {
     if (role == 'administrador') {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => UserLibrosDisponiblesPage()),
+        MaterialPageRoute(builder: (context) => const UserLibrosDisponiblesPage(isPrincipal: true,)),
       );
     } else if (role == 'usuario') {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const UserPrestadoPage()),
+        MaterialPageRoute(builder: (context) => const UserPrestadoPage(isPrincipal: true,)),
       );
     } else {
       DialogService.showInfoDialog(context, 'Rol no reconocido');
@@ -110,7 +108,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return GestureDetector(
       onTap: () {
-        // Oculta el teclado al tocar fuera de un campo de texto
         FocusScope.of(context).unfocus();
       },
       child: SafeArea(
@@ -123,13 +120,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 key: _formKey,
                 autovalidateMode: _autoValidateMode,
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const HeaderText(
-                      title: "Iniciar Sesión",
-                      description1: "ven a leer y deja que tu imaginación",
-                      description2: "pueda volar sin limites",
-                    ),
-                    SizedBox(height: screenHeight * 0.10),
+                    _buildHeader(screenWidth),
+                    SizedBox(height: screenHeight * 0.1),
                     CustomTextField(
                       hintText: 'Correo electrónico',
                       icon: Icons.email,
@@ -141,42 +135,22 @@ class _LoginScreenState extends State<LoginScreen> {
                     CustomTextField(
                       hintText: 'Contraseña',
                       icon: Icons.lock,
-                      obscureText: true, // Indica que es un campo de contraseña
+                      obscureText: true,
                       controller: _passwordController,
                       validator: Validators.passwordValidator,
                     ),
                     SizedBox(height: screenHeight * 0.05),
                     CustomButton(
-                      text: 'Iniciar Sesion',
+                      text: 'Iniciar Sesión',
                       colorFondo: Colors.redAccent,
-                      onPressed: _login,
+                      onPressed: (_emailController.text.isNotEmpty &&
+                                  _passwordController.text.isNotEmpty &&
+                                  _formKey.currentState?.validate() == true)
+                          ? _login
+                          : null,
                     ),
                     SizedBox(height: screenHeight * 0.05),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        const Text(
-                          'No estás Registrado?',
-                          style: TextStyle(fontSize: 14.0, color: Colors.white),
-                        ),
-                        SizedBox(width: screenWidth * 0.02),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const RegisterUserPage(),
-                              ),
-                            );
-                          },
-                          child: const Text(
-                            'Crear Cuenta',
-                            style: TextStyle(
-                                fontSize: 14.0, color: Colors.redAccent),
-                          ),
-                        ),
-                      ],
-                    ),
+                    _buildFooter(screenWidth),
                   ],
                 ),
               ),
@@ -184,6 +158,46 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildHeader(double screenWidth) {
+    return Column(
+      children: [
+        const HeaderText(
+          title: "Iniciar Sesión",
+          description1: "Ven a leer y deja que tu imaginación",
+          description2: "pueda volar sin límites",
+        ),
+        SizedBox(height: screenWidth * 0.05),
+      ],
+    );
+  }
+
+  Widget _buildFooter(double screenWidth) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        const Text(
+          '¿No estás Registrado?',
+          style: TextStyle(fontSize: 14.0, color: Colors.white),
+        ),
+        SizedBox(width: screenWidth * 0.02),
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const RegisterUserPage(),
+              ),
+            );
+          },
+          child: const Text(
+            'Crear Cuenta',
+            style: TextStyle(fontSize: 14.0, color: Colors.redAccent),
+          ),
+        ),
+      ],
     );
   }
 }

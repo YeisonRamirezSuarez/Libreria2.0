@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:libreria_app/models/book_model.dart';
 import 'package:libreria_app/models/usuario_model.dart';
+import 'package:libreria_app/pages/update_libro_page.dart';
 import 'package:libreria_app/pages/user_detalle_libro.dart';
 import 'package:libreria_app/pages/register_libro_page.dart';
 import 'package:libreria_app/pages/login_page.dart';
@@ -13,9 +14,14 @@ import 'package:libreria_app/widgets/custom_widgets.dart';
 class UserLibrosDisponiblesPage extends StatefulWidget {
   final bool isAdminHistoric;
   final bool isUserHistoric;
+  final bool isPrincipal;
 
-  const UserLibrosDisponiblesPage(
-      {super.key, this.isAdminHistoric = false, this.isUserHistoric = false});
+  const UserLibrosDisponiblesPage({
+    super.key, 
+    this.isAdminHistoric = false, 
+    this.isUserHistoric = false,
+    this.isPrincipal = false,
+  });
 
   @override
   _UserLibrosDisponiblesPageState createState() =>
@@ -24,7 +30,8 @@ class UserLibrosDisponiblesPage extends StatefulWidget {
 
 class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
   Map<String, String>? _userInfo;
-  List<dynamic>? _libros;
+  List<dynamic>? _books;
+  List<dynamic> _filteredBooks = [];
   bool _isDataLoaded = false;
 
   Future<void> _loadData() async {
@@ -33,13 +40,25 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
     final email = _userInfo?['email']!;
 
     // Cargar los libros según el rol y la condición
-    final libros = widget.isAdminHistoric
+    final books = widget.isAdminHistoric
         ? await ApiService.fetchBookPrestados()
         : await ApiService.fetchBooks();
 
     setState(() {
-      _libros = libros;
+      _books = books;
+      _filteredBooks = books;
       _isDataLoaded = true;
+    });
+  }
+
+  void _filterBooks(String query) {
+    setState(() {
+      final searchQuery = query.toLowerCase();
+      _filteredBooks = _books?.where((book) {
+        final titleLower = book.title.toLowerCase();
+        final authorLower = book.author.toLowerCase();
+        return titleLower.contains(searchQuery) || authorLower.contains(searchQuery);
+      }).toList() ?? [];
     });
   }
 
@@ -73,14 +92,15 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
           body: Column(
             children: [
               ItemBannerUser(
-                estadoUsuario:
-                    role == 'administrador' && !widget.isAdminHistoric,
+                isPrincipal: widget.isPrincipal,
+                estadoUsuario: role == 'administrador' && !widget.isAdminHistoric,
                 seaching: true,
                 titleBaner: role == 'administrador' && widget.isAdminHistoric
                     ? 'Libros Prestados'
                     : 'Libros Disponibles',
                 rolUser: role,
                 nameUser: name,
+                searchCallback: _filterBooks, // Callback de búsqueda
                 options: role == 'administrador' && !widget.isAdminHistoric
                     ? [
                         Option(
@@ -90,7 +110,7 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => UserLibrosDisponiblesPage(
+                                builder: (context) => const UserLibrosDisponiblesPage(
                                   isAdminHistoric: true,
                                 ),
                               ),
@@ -141,9 +161,9 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
                     mainAxisSpacing: 10,
                     childAspectRatio: 0.85,
                   ),
-                  itemCount: _libros?.length ?? 0,
+                  itemCount: _filteredBooks.length,
                   itemBuilder: (context, index) {
-                    final libro = _libros![index];
+                    final libro = _filteredBooks[index];
                     final usuario = libro is Usuario
                         ? libro
                         : Usuario(
@@ -166,10 +186,9 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
                       isUserHistoric: widget.isUserHistoric,
                       role: role,
                       name: name,
-                      cantidad:
-                          (role == 'administrador' && widget.isAdminHistoric)
-                              ? ''
-                              : libro.quantity,
+                      cantidad: (role == 'administrador' && widget.isAdminHistoric)
+                          ? ''
+                          : libro.quantity,
                     );
                   },
                 ),
@@ -235,7 +254,7 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
           final double cardWidth = constraints.maxWidth;
 
           return Container(
-            margin: const EdgeInsets.all(8.0),
+            margin: const EdgeInsets.all(12.0),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12.0),
@@ -256,8 +275,7 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
                 children: [
                   ImageWidget(
                     imageUrl: usuario.imageUrl,
-                    height: cardWidth *
-                        0.6, // Ajusta el tamaño en función del ancho del Card
+                    height: cardWidth * 0.6, // Ajusta el tamaño en función del ancho del Card
                     width: cardWidth * 0.6,
                   ),
                   const SizedBox(height: 8.0),

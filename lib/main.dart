@@ -41,7 +41,7 @@ class MyApp extends StatelessWidget {
           // Oculta el teclado al tocar fuera de un campo de texto
           FocusScope.of(context).unfocus();
         },
-        child: const LoginScreen(), // O el widget que desees mostrar
+        child: LoginScreen(), // O el widget que desees mostrar
       ),
     );
   }

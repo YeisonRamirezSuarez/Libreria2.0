@@ -6,25 +6,53 @@ import 'package:libreria_app/services/api_services.dart';
 import 'package:libreria_app/services/dialog_service.dart';
 
 class ItemBannerUser extends StatefulWidget {
+  final bool isPrincipal;
   final bool estadoUsuario; // Estado del usuario
   final bool seaching;
   final bool deleteBook;
   final String titleBaner;
   final String rolUser;
-  final String nameUser;
+  String nameUser; // Cambiado a mutable
   final List<Option> options; // Lista de opciones
-  final int idLibro;
+  final String idLibro;
+  final Function(String)? searchCallback; // Callback para la búsqueda
+  final List<IconData> availableIcons; // Lista de íconos disponibles
 
-  const ItemBannerUser({
+  ItemBannerUser({
     super.key,
+    this.isPrincipal = false,
     required this.estadoUsuario,
     this.seaching = false,
     this.deleteBook = false,
     this.titleBaner = 'Titulo del Banner',
     this.rolUser = 'Rol de Usuario',
-    this.nameUser = 'Nombre del Administrador',
-    this.options = const [], // Nueva propiedad para opciones
-    this.idLibro = 0,
+    required this.nameUser, // Requiere un nombre inicial
+    this.options = const [],
+    this.idLibro = '0',
+    this.searchCallback,
+    this.availableIcons = const [
+      Icons.person,
+      Icons.account_circle,
+      Icons.face,
+      Icons.people,
+      Icons.supervised_user_circle,
+      Icons.group,
+      Icons.business,
+      Icons.work,
+      Icons.person_add,
+      Icons.person_remove,
+      Icons.contact_mail,
+      Icons.contact_phone,
+      Icons.email,
+      Icons.phone,
+      Icons.card_membership,
+      Icons.badge,
+      Icons.security,
+      Icons.lock,
+      Icons.vpn_key,
+      Icons.help,
+      Icons.info,
+    ],
   });
 
   @override
@@ -32,26 +60,34 @@ class ItemBannerUser extends StatefulWidget {
 }
 
 class _ItemBannerUserState extends State<ItemBannerUser> {
-  // FocusNode to control the search bar focus
   late FocusNode _searchFocusNode;
-  final ApiService _apiService = ApiService();
+  TextEditingController _searchController = TextEditingController();
+  TextEditingController _nameController = TextEditingController();
+  IconData _selectedIcon = Icons.person; // Estado del ícono seleccionado
 
   @override
   void initState() {
     super.initState();
-    // Initialize the FocusNode
     _searchFocusNode = FocusNode();
+    _nameController.text = widget.nameUser;
+    _selectedIcon = Icons.person; // Establece un ícono predeterminado
 
-    // Ensure the TextField does not have focus on page build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       FocusScope.of(context).unfocus();
+    });
+
+    _searchController.addListener(() {
+      if (widget.searchCallback != null) {
+        widget.searchCallback!(_searchController.text); // Llama al callback cuando cambia el texto
+      }
     });
   }
 
   @override
   void dispose() {
-    // Dispose the FocusNode to free resources
     _searchFocusNode.dispose();
+    _searchController.dispose();
+    _nameController.dispose();
     super.dispose();
   }
 
@@ -64,7 +100,7 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
             context, 'Libro eliminado exitosamente');
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => UserLibrosDisponiblesPage()),
+          MaterialPageRoute(builder: (context) => UserLibrosDisponiblesPage(isPrincipal: true)),
         );
       } else {
         DialogService.showErrorSnackBar(
@@ -75,14 +111,94 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
     }
   }
 
+  void _showEditDialog() {
+    IconData tempSelectedIcon = _selectedIcon;
+    TextEditingController tempNameController = TextEditingController(text: _nameController.text);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: const Text('Editar Usuario'),
+              content: SizedBox(
+                width: double.maxFinite, // Asegura que el contenido use el máximo ancho posible
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Selector de ícono
+                    Text('Selecciona un ícono:'),
+                    const SizedBox(height: 10),
+                    Container(
+                      height: 150.0, // Ajusta la altura según sea necesario
+                      child: GridView.builder(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 4, // Número de íconos por fila
+                          crossAxisSpacing: 10.0, // Espacio horizontal entre íconos
+                          mainAxisSpacing: 10.0, // Espacio vertical entre íconos
+                        ),
+                        itemCount: widget.availableIcons.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          IconData icon = widget.availableIcons[index];
+                          bool isSelected = tempSelectedIcon == icon;
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                tempSelectedIcon = icon; // Actualiza el ícono seleccionado temporal
+                              });
+                            },
+                            child: Icon(
+                              icon,
+                              color: isSelected ? Colors.blue : Colors.white,
+                              size: 40.0,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    // Campo de texto para nombre
+                    TextField(
+                      controller: tempNameController,
+                      decoration: const InputDecoration(labelText: 'Nombre'),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectedIcon = tempSelectedIcon; // Guarda el ícono seleccionado en el estado del widget
+                      widget.nameUser = tempNameController.text; // Guarda el nombre en el estado del widget
+                    });
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Guardar'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Cancelar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return FocusScope(
-      node: FocusScopeNode(), // Create a new FocusScope
+      node: FocusScopeNode(),
       child: Container(
         width: double.infinity,
         color: Colors.black,
-        padding: const EdgeInsets.all(10.0),
+        padding: const EdgeInsets.all(12.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -90,11 +206,17 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
               color: Colors.black,
               child: Row(
                 children: <Widget>[
-                  // User icon
-                  const CircleAvatar(
-                    radius: 30.0,
-                    backgroundImage: AssetImage(
-                        'assets/user.png'), // Replace with your image
+                  GestureDetector(
+                    onTap: (widget.isPrincipal) ? _showEditDialog : null,
+                    child: CircleAvatar(
+                      radius: 30.0,
+                      backgroundColor: Colors.grey[200],
+                      child: Icon(
+                        _selectedIcon, // Mostrar ícono seleccionado
+                        size: 30,
+                        color: Colors.black,
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 20.0),
                   Expanded(
@@ -118,7 +240,6 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
                       ],
                     ),
                   ),
-                  // Add the button here
                   if (widget.estadoUsuario)
                     IconButton(
                       icon: const Icon(Icons.add),
@@ -139,13 +260,11 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
                                     iconColor: Colors.white,
                                     title: Text(
                                       option.title,
-                                      style:
-                                          const TextStyle(color: Colors.white),
+                                      style: const TextStyle(color: Colors.white),
                                     ),
                                     onTap: () {
                                       Navigator.pop(context); // Cierra el modal
-                                      option
-                                          .onTap(); // Ejecuta la función onTap
+                                      option.onTap(); // Ejecuta la función onTap
                                     },
                                   );
                                 }).toList(),
@@ -170,35 +289,24 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
               ),
             ),
             const SizedBox(height: 10.0),
-
-            // Search bar
             Visibility(
-              visible: widget.seaching, // Initially hidden
-              child: Container(
-                margin: const EdgeInsets.only(top: 10.0),
-                child: TextField(
-                  focusNode: _searchFocusNode, // Attach FocusNode
-                  decoration: InputDecoration(
-                    hintText: 'Buscar',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: GestureDetector(
-                      onTap: () {
-                        _searchFocusNode
-                            .unfocus(); // Unfocus when clicking the close icon
-                      },
-                      child: const Icon(Icons.close),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[800],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15.0),
-                      borderSide: BorderSide.none,
-                    ),
+              visible: widget.seaching,
+              child: TextField(
+                focusNode: _searchFocusNode,
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Buscar por nombre o autor',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: GestureDetector(
+                    onTap: () {
+                      _searchController.clear();
+                      _searchFocusNode.unfocus();
+                    },
+                    child: const Icon(Icons.close),
                   ),
                 ),
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 10.0),
               child: Row(
@@ -214,7 +322,7 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
                       textAlign: TextAlign.left,
                     ),
                   ),
-                  if (widget.deleteBook) // Conditionally include the IconButton
+                  if (widget.deleteBook)
                     IconButton(
                       icon: const Icon(
                         Icons.delete_rounded,
@@ -222,20 +330,17 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
                         size: 50,
                       ),
                       onPressed: () {
-                        // Define the action when the icon is pressed
                         _deleteLibro();
                         Navigator.push(
                             context,
                             MaterialPageRoute(
                                 builder: (context) =>
-                                    UserLibrosDisponiblesPage()));
+                                    const UserLibrosDisponiblesPage(isPrincipal: true,)));
                       },
                     ),
                 ],
               ),
             ),
-
-            // Orange divider
             Container(
               height: 3.0,
               color: Colors.redAccent,
@@ -251,12 +356,11 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
 class Option {
   final Icon icon;
   final String title;
-  final VoidCallback
-      onTap; // Cambiado de Widget destination a VoidCallback onTap
+  final VoidCallback onTap;
 
   Option({
     required this.icon,
     required this.title,
-    required this.onTap, // Cambiado de destination a onTap
+    required this.onTap,
   });
 }

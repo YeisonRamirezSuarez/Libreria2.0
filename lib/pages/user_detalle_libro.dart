@@ -24,7 +24,6 @@ class BookDetailPage extends StatelessWidget {
 
   Future<void> _launchURL(String url) async {
     if (!await launchUrl(Uri.parse(url))) {
-      // print('No se pudo abrir la URL: $url');
       throw Exception('No se pudo abrir la URL: $url');
     }
   }
@@ -34,86 +33,94 @@ class BookDetailPage extends StatelessWidget {
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.black,
-        body: Column(
-          children: [
-            ItemBannerUser(
-              estadoUsuario: false,
-              seaching: false,
-              titleBaner: titleBaner,
-              rolUser: role,
-              nameUser: name,
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      ImageWidget(
-                        imageUrl: usuario.imageUrl,
-                        height: 200.0,
-                        width: 200.0,
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        usuario.title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        usuario.author,
-                        style: TextStyle(
-                          color: Colors.grey[400],
-                          fontSize: 22,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        usuario.description,
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 18,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      if (usuario.date.isNotEmpty) ...[
-                        const SizedBox(height: 10),
-                        Text(
-                          'Fecha: ${usuario.date}',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            double imageSize = constraints.maxWidth * 0.5; // Ajusta el tamaño de la imagen en función del ancho
+            double textSizeTitle = constraints.maxWidth * 0.06; // Tamaño del texto del título
+            double textSizeDetail = constraints.maxWidth * 0.05; // Tamaño del texto de detalles
+            double buttonSize = constraints.maxWidth * 0.15; // Tamaño del botón
+
+            return Column(
+              children: [
+                ItemBannerUser(
+                  estadoUsuario: false,
+                  seaching: false,
+                  titleBaner: titleBaner,
+                  rolUser: role,
+                  nameUser: name,
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: EdgeInsets.all(constraints.maxWidth * 0.05), // Ajusta el padding
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: <Widget>[
+                          ImageWidget(
+                            imageUrl: usuario.imageUrl,
+                            height: imageSize,
+                            width: imageSize,
                           ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                      const SizedBox(height: 20),
-                      const Divider(
-                        color: Colors.redAccent,
-                        thickness: 2,
+                          SizedBox(height: constraints.maxWidth * 0.02), // Espaciado dinámico
+                          Text(
+                            usuario.title,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: textSizeTitle,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: constraints.maxWidth * 0.01),
+                          Text(
+                            usuario.author,
+                            style: TextStyle(
+                              color: Colors.grey[400],
+                              fontSize: textSizeDetail,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                          SizedBox(height: constraints.maxWidth * 0.01),
+                          Text(
+                            usuario.description,
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: textSizeDetail,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                          if (usuario.date.isNotEmpty) ...[
+                            SizedBox(height: constraints.maxWidth * 0.02),
+                            Text(
+                              'Fecha: ${usuario.date}',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: textSizeDetail * 0.8,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                          SizedBox(height: constraints.maxWidth * 0.04),
+                          const Divider(
+                            color: Colors.redAccent,
+                            thickness: 2,
+                          ),
+                          SizedBox(height: constraints.maxWidth * 0.08),
+                          _buildButtons(context, buttonSize),
+                        ],
                       ),
-                      const SizedBox(height: 40),
-                      _buildButtons(context, usuario),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ),
-          ],
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildButtons(BuildContext context, Usuario usuario) {
+  Widget _buildButtons(BuildContext context, double buttonSize) {
     if (cantButton == 2) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -131,11 +138,11 @@ class BookDetailPage extends StatelessWidget {
                     if (response.success) {
                       print('Libro devuelto exitosamente');
                       DialogService.showSuccessSnackBar(
-                          context, 'Libro devuleto exitosamente');
+                          context, 'Libro devuelto exitosamente');
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const UserPrestadoPage()),
+                            builder: (context) => const UserPrestadoPage(isPrincipal: true,)),
                       );
                     } else {
                       DialogService.showErrorSnackBar(
@@ -146,7 +153,7 @@ class BookDetailPage extends StatelessWidget {
                         context, 'Error de red: $error');
                   }
                 },
-                dimensioneBoton: 60.0,
+                dimensioneBoton: buttonSize,
                 colorFondo: Colors.redAccent,
               ),
             ),
@@ -159,7 +166,7 @@ class BookDetailPage extends StatelessWidget {
                 onPressed: () {
                   _launchURL(usuario.bookUrl);
                 },
-                dimensioneBoton: 60.0,
+                dimensioneBoton: buttonSize,
                 colorFondo: Colors.redAccent,
               ),
             ),
@@ -181,7 +188,7 @@ class BookDetailPage extends StatelessWidget {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => const UserPrestadoPage()),
+                      builder: (context) => const UserPrestadoPage(isPrincipal: true,)),
                 );
               } else {
                 DialogService.showErrorSnackBar(
@@ -191,7 +198,7 @@ class BookDetailPage extends StatelessWidget {
               DialogService.showErrorSnackBar(context, 'Error de red: $error');
             }
           },
-          dimensioneBoton: 60.0,
+          dimensioneBoton: buttonSize,
           colorFondo: Colors.redAccent,
         ),
       );

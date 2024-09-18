@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:libreria_app/models/login_model.dart';
+import 'package:libreria_app/pages/login_page.dart';
 import 'package:libreria_app/services/api_services.dart';
 import 'package:libreria_app/services/dialog_service.dart';
 import 'package:libreria_app/utils/validators.dart';
 import 'package:libreria_app/widgets/custom_widgets.dart';
 
-import 'dart:async'; 
-import 'dart:io';   
+import 'dart:async';
+import 'dart:io';
 
 class RegisterUserPage extends StatefulWidget {
   const RegisterUserPage({super.key});
@@ -27,7 +28,6 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
   AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
   late final List<TextEditingController> _controllers;
 
-
   @override
   void initState() {
     super.initState();
@@ -47,7 +47,6 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
         }
       });
     }
-  
   }
 
   @override
@@ -76,8 +75,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
       password: _passwordController.text,
     );
 
-   try {
-      // Usar un timeout para la solicitud HTTP
+    try {
       final response =
           await ApiService.registerUser(user).timeout(Duration(seconds: 5));
 
@@ -89,15 +87,12 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
             context, response.error ?? 'Error desconocido');
       }
     } on TimeoutException catch (_) {
-      // Manejar el caso de timeout
       DialogService.showErrorSnackBar(context,
           'El tiempo de espera para la conexión ha expirado. Por favor, informa que el servicio está apagado o no responde.');
     } on SocketException catch (_) {
-      // Manejar el caso de problemas de red
       DialogService.showErrorSnackBar(context,
           'No se pudo conectar con el servidor. Por favor, verifique su conexión a Internet.');
     } catch (e) {
-      // Manejar cualquier otro tipo de excepción
       DialogService.showErrorSnackBar(
           context, 'Se ha producido un error inesperado: ${e.toString()}');
     }
@@ -122,10 +117,9 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
                 key: _formKey,
                 autovalidateMode: _autoValidateMode,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    const SizedBox(),
-                    const HeaderText(
+                    HeaderText(
                       title: 'Crea Tu Cuenta',
                       description1: 'Disfruta miles de libros en la palma',
                       description2: 'de tu mano',
@@ -174,7 +168,15 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
                     SizedBox(height: screenHeight * 0.05),
                     CustomButton(
                       text: 'Registrarse',
-                      onPressed: registerUser,
+                      onPressed: (
+                          Validators.requiredFieldValidator(_nameController.text) ==null &&
+                          Validators.emailValidator(_emailController.text) == null &&
+                          Validators.phoneValidator(_phoneController.text) == null &&
+                          Validators.addressValidator(_addressController.text) == null &&
+                          Validators.passwordValidator(_passwordController.text) == null &&
+                              _formKey.currentState?.validate() == true)
+                          ? registerUser
+                          : null,
                       colorFondo: Colors.redAccent,
                     ),
                     SizedBox(height: screenHeight * 0.04),
@@ -182,25 +184,25 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
                         const Text(
-                          'Tienes Cuenta?',
-                          style: TextStyle(
-                            fontSize: 14.0,
-                            color: Colors.white,
-                          ),
+                          '¿Tienes Cuenta?',
+                          style: TextStyle(fontSize: 14.0, color: Colors.white),
                         ),
                         SizedBox(width: screenWidth * 0.02),
                         GestureDetector(
                           onTap: () {
                             FocusScope.of(context).unfocus();
                             _formKey.currentState?.reset();
-                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LoginScreen(),
+                              ),
+                            );
                           },
                           child: const Text(
                             'Iniciar Sesión',
                             style: TextStyle(
-                              fontSize: 14.0,
-                              color: Colors.redAccent,
-                            ),
+                                fontSize: 14.0, color: Colors.redAccent),
                           ),
                         ),
                       ],
