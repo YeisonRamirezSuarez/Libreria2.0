@@ -1,16 +1,23 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
-import 'package:libreria_app/models/api_response.dart';
+import 'package:libreria_app/models/api_response_models/api_response_base.dart';
+import 'package:libreria_app/models/api_response_models/api_response_delete.dart';
+import 'package:libreria_app/models/api_response_models/api_response_login.dart';
+import 'package:libreria_app/models/api_response_models/api_response_registrer.dart';
+import 'package:libreria_app/models/api_response_models/api_response_update.dart';
 import 'package:libreria_app/models/book_model.dart';
+import 'package:libreria_app/models/user_model.dart';
 import 'package:libreria_app/models/usuario_model.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../models/login_model.dart';
-import '../config/config.dart';
+import 'package:libreria_app/models/usuario_prestado_model.dart';
+import 'package:libreria_app/services/api_helpers.dart';
+import '../models/user_login_model.dart';
+import 'api_endpoints.dart';
+
 
 class ApiService {
   Future<ApiResponseLogin> login(String email, String password) async {
-    final url = Uri.parse('${AppConfig.baseUrl}login.php');
+    final url = Uri.parse(ApiEndpoints.login);
 
     try {
       final response = await http.post(
@@ -19,32 +26,14 @@ class ApiService {
         body: json.encode({'email': email, 'password': password}),
       );
 
-      print(response.body);
-      print(response.statusCode);
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('email', email);
-        await prefs.setString('rol', data['rol']);
-        await prefs.setString('name', data['name']);
-        await prefs.setString('phone', data['phone']);
-
-        return ApiResponseLogin(user: UserLogin.fromJson(data));
-      } else if (response.statusCode == 400) {
-        final data = json.decode(response.body);
-        return ApiResponseLogin(error: data['error'] ?? 'Error no controlado');
-      } else {
-        final data = json.decode(response.body);
-        return ApiResponseLogin(error: data['error'] ?? 'Error desconocido');
-      }
+      return handleLoginResponse(response, email);
     } catch (e) {
       return ApiResponseLogin(error: 'Error en la conexión: $e');
     }
   }
 
-  static Future<ApiResponseRegistrer> registerUser(User user) async {
-    final url = Uri.parse('${AppConfig.baseUrl}/usuario.php');
+  Future<ApiResponseRegistrer> registerUser(User user) async {
+    final url = Uri.parse(ApiEndpoints.registerUser);
 
     try {
       final response = await http.post(
@@ -53,15 +42,14 @@ class ApiService {
         body: json.encode(user.toJson()),
       );
 
-      final responseBody = json.decode(response.body);
-      return ApiResponseRegistrer.fromJson(responseBody);
+      return ApiResponseRegistrer.fromJson(json.decode(response.body));
     } catch (error) {
       throw Exception('Error de red: $error');
     }
   }
 
-  static Future<ApiResponseRegistrer> registerBook(Book book) async {
-    final url = Uri.parse('${AppConfig.baseUrl}/libro.php');
+  Future<ApiResponseRegistrer> registerBook(Book book) async {
+    final url = Uri.parse(ApiEndpoints.registerBook);
 
     try {
       final response = await http.post(
@@ -70,15 +58,14 @@ class ApiService {
         body: json.encode(book.toJson()),
       );
 
-      final responseBody = json.decode(response.body);
-      return ApiResponseRegistrer.fromJson(responseBody);
+      return ApiResponseRegistrer.fromJson(json.decode(response.body));
     } catch (error) {
       throw Exception('Error de red: $error');
     }
   }
 
-  static Future<Book> fetchBookData(int libroId) async {
-    final url = Uri.parse('${AppConfig.baseUrl}/libro.php?id=$libroId');
+  Future<Book> fetchBookData(int libroId) async {
+    final url = Uri.parse('${ApiEndpoints.fetchBook}&id=$libroId');
 
     try {
       final response = await http.get(url);
@@ -94,8 +81,8 @@ class ApiService {
     }
   }
 
-  static Future<List<Book>> fetchBooks() async {
-    final url = Uri.parse('${AppConfig.baseUrl}/libro.php');
+  Future<List<Book>> fetchBooks() async {
+    final url = Uri.parse(ApiEndpoints.fetchBooks);
 
     try {
       final response = await http.get(url);
@@ -117,9 +104,8 @@ class ApiService {
     }
   }
 
-  static Future<ApiResponseUpdate> updateBook(Book book) async {
-    final url =
-        Uri.parse('${AppConfig.baseUrl}/libro.php?update=1&id=${book.id}');
+  Future<ApiResponseUpdate> updateBook(Book book) async {
+    final url = Uri.parse('${ApiEndpoints.updateBook}&id=${book.id}');
 
     try {
       final response = await http.post(
@@ -134,30 +120,37 @@ class ApiService {
     }
   }
 
-  static Future<List<Usuario>> fetchBookForUser(String email) async {
-    final url = Uri.parse('${AppConfig.baseUrl}/libro.php?email=$email');
+  Future<List<Usuario>> fetchBookForUser(String email) async {
+    final url = Uri.parse('${ApiEndpoints.fetchBooks}?email=$email');
 
-    final response = await http.get(url);
+    try {
+      final response = await http.get(url);
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
+        print(response.body);
+      print(response.statusCode);
 
-      if (data['data'] is List) {
-        return (data['data'] as List)
-            .map((item) => Usuario.fromJson(item))
-            .toList();
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        if (data['data'] is List) {
+          return (data['data'] as List)
+              .map((item) => Usuario.fromJson(item))
+              .toList();
+        } else {
+          throw Exception('La respuesta no contiene una lista de libros');
+        }
       } else {
-        throw Exception('La respuesta no contiene una lista de libros');
+        throw Exception(
+            'Error al obtener el historial de libros. Código de estado: ${response.statusCode}');
       }
-    } else {
-      // Add this throw statement to handle non-200 status codes.
-      throw Exception(
-          'Error al obtener el historial de libros. Código de estado: ${response.statusCode}');
+    } catch (error) {
+      throw Exception('Error de red: $error');
     }
   }
 
-  static Future<List<Usuario>> fetchBookPrestados() async {
-    final url = Uri.parse('${AppConfig.baseUrl}/peticiones.php?prestado=1');
+  Future<List<Usuario>> fetchBookPrestados() async {
+    final url = Uri.parse(ApiEndpoints.fetchPrestados);
 
     try {
       final response = await http.get(url);
@@ -170,18 +163,16 @@ class ApiService {
             data['data'] is List) {
           final List<dynamic> jsonList = data['data'] as List<dynamic>;
 
-          // Convierte cada elemento en una instancia de Usuario
           return jsonList
               .map((item) {
                 try {
                   return Usuario.fromJson(item as Map<String, dynamic>);
                 } catch (e) {
                   print('Error parsing item: $e');
-                  return null; // O maneja el error de manera apropiada
+                  return null;
                 }
               })
-              .whereType<
-                  Usuario>() // Filtra los elementos que fueron parseados correctamente
+              .whereType<Usuario>()
               .toList();
         } else {
           throw Exception(
@@ -192,16 +183,13 @@ class ApiService {
             'Error al obtener el historial de libros. Código de estado: ${response.statusCode}');
       }
     } catch (e) {
-      // Manejo de excepciones generales
       throw Exception('Error en la solicitud: $e');
     }
   }
 
-  static Future<ApiResponse> prestarLibro(Usuario usuario) async {
-    final url = Uri.parse('${AppConfig.baseUrl}/peticiones.php?prestar=1');
+  Future<ApiResponseBase> prestarLibro(Usuario usuario) async {
+    final url = Uri.parse(ApiEndpoints.prestarLibro);
 
-    // Format the current date
-    //10 ene. 2023, 14:58 este es el formato que necesito
     final DateFormat formatter = DateFormat('dd MMMM yyyy, hh:mm a');
     final updatedUsuario = Usuario(
       idBook: usuario.idBook,
@@ -210,7 +198,7 @@ class ApiService {
       bookUrl: usuario.bookUrl,
       imageUrl: usuario.imageUrl,
       description: usuario.description,
-      date: formatter.format(DateTime.now()), // Update date here
+      date: formatter.format(DateTime.now()),
       emailUser: usuario.emailUser,
       nameUser: usuario.nameUser,
       phoneUser: usuario.phoneUser,
@@ -225,7 +213,7 @@ class ApiService {
 
       if (response.statusCode == 201 || response.statusCode == 205) {
         final responseBody = json.decode(response.body);
-        return ApiResponse.fromJson(responseBody);
+        return ApiResponseBase.fromJson(responseBody, "success lend book");
       } else {
         throw Exception('Error al prestar libro: ${response.statusCode}');
       }
@@ -234,9 +222,9 @@ class ApiService {
     }
   }
 
-  static Future<ApiResponseDelete> deleteLibroPrestado(Usuario usuario) async {
-    final url = Uri.parse(
-        '${AppConfig.baseUrl}/peticiones.php?delete=1&id=${usuario.id}');
+  Future<ApiResponseDelete> deleteLibroPrestado(Usuario usuario) async {
+    final url = Uri.parse('${ApiEndpoints.deletePrestado}&id=${usuario.id}');
+
     try {
       final response = await http.post(
         url,
@@ -247,16 +235,15 @@ class ApiService {
         final responseBody = json.decode(response.body);
         return ApiResponseDelete.fromJson(responseBody);
       } else {
-        throw Exception('Error al prestar libro: ${response.statusCode}');
+        throw Exception('Error al eliminar libro prestado: ${response.statusCode}');
       }
     } catch (error) {
       throw Exception('Error de red: $error');
     }
   }
 
-  static Future<ApiResponseDelete> deleteLibro(String idLibro) async {
-    final url =
-        Uri.parse('${AppConfig.baseUrl}/libro.php?delete=1&id=$idLibro');
+  Future<ApiResponseDelete> deleteLibro(String idLibro) async {
+    final url = Uri.parse('${ApiEndpoints.deleteBook}&id=$idLibro');
 
     try {
       final response = await http.post(
@@ -268,37 +255,38 @@ class ApiService {
         final responseBody = json.decode(response.body);
         return ApiResponseDelete.fromJson(responseBody);
       } else {
-        throw Exception('Error al prestar libro: ${response.statusCode}');
+        throw Exception('Error al eliminar libro: ${response.statusCode}');
       }
     } catch (error) {
       throw Exception('Error de red: $error');
     }
   }
 
-  static Future<List<UsuarioPrestado>> fetchUsuariosConLibrosPrestados(
-      String idBook) async {
-    print('idBook: $idBook');
-    final url =
-        Uri.parse('${AppConfig.baseUrl}/peticiones.php?prestado=1&id=$idBook');
+  Future<List<UsuarioPrestado>> fetchUsuariosConLibrosPrestados(String idBook) async {
+    final url = Uri.parse('${ApiEndpoints.fetchPrestados}?id=$idBook');
 
-    final response = await http.get(url);
+    try {
+      final response = await http.get(url);
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
 
-      if (data['data'] is List) {
-        return (data['data'] as List)
-            .map((item) => UsuarioPrestado.fromJson(item))
-            .toList();
+        if (data['data'] is List) {
+          return (data['data'] as List)
+              .map((item) => UsuarioPrestado.fromJson(item))
+              .toList();
+        } else {
+          throw Exception('La respuesta no contiene una lista de usuarios');
+        }
+      } else if (response.statusCode == 201) {
+        throw Exception(
+            'Se ha creado un recurso, pero esperábamos una lista de usuarios.');
       } else {
-        throw Exception('La respuesta no contiene una lista de usuarios');
+        throw Exception(
+            'Error al obtener los usuarios con libros prestados. Código de estado: ${response.statusCode}');
       }
-    } else if (response.statusCode == 201) {
-      throw Exception(
-          'Se ha creado un recurso, pero esperábamos una lista de usuarios.');
-    } else {
-      throw Exception(
-          'Error al obtener los usuarios con libros prestados. Código de estado: ${response.statusCode}');
+    } catch (error) {
+      throw Exception('Error de red: $error');
     }
   }
 }

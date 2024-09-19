@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/models/login_model.dart';
+import 'package:libreria_app/models/user_model.dart';
 import 'package:libreria_app/pages/login_page.dart';
-import 'package:libreria_app/services/api_services.dart';
-import 'package:libreria_app/services/dialog_service.dart';
+import 'package:libreria_app/services/api_service.dart';
+import 'package:libreria_app/services/snack_bar_service.dart';
 import 'package:libreria_app/utils/validators.dart';
 import 'package:libreria_app/widgets/custom_widgets.dart';
-
 import 'dart:async';
 import 'dart:io';
 
@@ -13,40 +12,23 @@ class RegisterUserPage extends StatefulWidget {
   const RegisterUserPage({super.key});
 
   @override
-  _RegisterUserPageState createState() => _RegisterUserPageState();
+  RegisterUserPageState createState() => RegisterUserPageState();
 }
 
-class _RegisterUserPageState extends State<RegisterUserPage> {
+class RegisterUserPageState extends State<RegisterUserPage> {
   final _formKey = GlobalKey<FormState>();
-
-  // Controladores para los campos de texto
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
   final _passwordController = TextEditingController();
   AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
-  late final List<TextEditingController> _controllers;
+  final ApiService _apiService = ApiService(); // Crear una instancia de ApiService
+
 
   @override
   void initState() {
     super.initState();
-
-    _controllers = [
-      _nameController,
-      _emailController,
-      _phoneController,
-      _addressController,
-      _passwordController,
-    ];
-
-    for (var controller in _controllers) {
-      controller.addListener(() {
-        if (_autoValidateMode == AutovalidateMode.always) {
-          setState(() {});
-        }
-      });
-    }
   }
 
   @override
@@ -59,7 +41,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
     super.dispose();
   }
 
-  Future<void> registerUser() async {
+  Future<void> _registerUser() async {
     if (!_formKey.currentState!.validate()) {
       setState(() {
         _autoValidateMode = AutovalidateMode.always;
@@ -76,137 +58,107 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
     );
 
     try {
-      final response =
-          await ApiService.registerUser(user).timeout(const Duration(seconds: 5));
+      final response = await _apiService.registerUser(user).timeout(
+        const Duration(seconds: 5),
+      );
+
+      if (!mounted) return;
 
       if (response.success) {
-        DialogService.showSuccessSnackBar(context, 'Registro exitoso');
-        Navigator.pop(context);
+        _showSuccessDialog();
       } else {
-        DialogService.showErrorSnackBar(
-            context, response.error ?? 'Error desconocido');
+        _showErrorDialog(response.error ?? 'Error desconocido');
       }
-    } on TimeoutException catch (_) {
-      DialogService.showErrorSnackBar(context,
-          'El tiempo de espera para la conexión ha expirado. Por favor, informa que el servicio está apagado o no responde.');
-    } on SocketException catch (_) {
-      DialogService.showErrorSnackBar(context,
-          'No se pudo conectar con el servidor. Por favor, verifique su conexión a Internet.');
+    } on TimeoutException {
+      if (mounted) {
+        _showErrorDialog(
+          'El tiempo de espera para la conexión ha expirado. Por favor, informe que el servicio está apagado o no responde.',
+        );
+      }
+    } on SocketException {
+      if (mounted) {
+        _showErrorDialog(
+          'No se pudo conectar con el servidor. Por favor, verifique su conexión a Internet.',
+        );
+      }
     } catch (e) {
-      DialogService.showErrorSnackBar(
-          context, 'Se ha producido un error inesperado: ${e.toString()}');
+      if (mounted) {
+        _showErrorDialog(
+          'Se ha producido un error inesperado: ${e.toString()}',
+        );
+      }
     }
+  }
+
+  void _showSuccessDialog() {
+    SnackBarService.showSuccessSnackBar(context, 'Registro exitoso');
+    Navigator.pop(context);
+  }
+
+  void _showErrorDialog(String message) {
+    SnackBarService.showErrorSnackBar(context, message);
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-
-    return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-      },
+    return KeyboardDismiss(
       child: SafeArea(
         child: Scaffold(
           body: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: Padding(
-              padding: EdgeInsets.all(screenWidth * 0.05),
+              padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
               child: Form(
                 key: _formKey,
                 autovalidateMode: _autoValidateMode,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    const HeaderText(
-                      title: 'Crea Tu Cuenta',
-                      description1: 'Disfruta miles de libros en la palma',
-                      description2: 'de tu mano',
-                    ),
-                    SizedBox(height: screenHeight * 0.04),
-                    CustomTextField(
+                    _buildHeader(),
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.04),
+                    _buildTextField(
+                      controller: _nameController,
                       hintText: 'Nombre Completo',
                       icon: Icons.person,
-                      controller: _nameController,
-                      keyboardType: TextInputType.name,
                       validator: Validators.requiredFieldValidator,
                     ),
-                    SizedBox(height: screenHeight * 0.02),
-                    CustomTextField(
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+                    _buildTextField(
+                      controller: _emailController,
                       hintText: 'Correo Electrónico',
                       icon: Icons.email,
-                      controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       validator: Validators.emailValidator,
                     ),
-                    SizedBox(height: screenHeight * 0.02),
-                    CustomTextField(
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+                    _buildTextField(
+                      controller: _phoneController,
                       hintText: 'Número Teléfono',
                       icon: Icons.phone,
-                      controller: _phoneController,
                       keyboardType: TextInputType.phone,
-                      maxLength: 10, // Límite de 10 caracteres
+                      maxLength: 10,
                       validator: Validators.phoneValidator,
                     ),
-                    SizedBox(height: screenHeight * 0.02),
-                    CustomTextField(
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+                    _buildTextField(
+                      controller: _addressController,
                       hintText: 'Dirección',
                       icon: Icons.home,
-                      controller: _addressController,
                       keyboardType: TextInputType.streetAddress,
                       validator: Validators.addressValidator,
                     ),
-                    SizedBox(height: screenHeight * 0.02),
-                    CustomTextField(
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+                    _buildTextField(
+                      controller: _passwordController,
                       hintText: 'Contraseña',
                       icon: Icons.lock,
-                      obscureText: true, // Indica que es un campo de contraseña
-                      controller: _passwordController,
+                      obscureText: true,
                       validator: Validators.passwordValidator,
                     ),
-                    SizedBox(height: screenHeight * 0.05),
-                    CustomButton(
-                      text: 'Registrarse',
-                      onPressed: (
-                          Validators.requiredFieldValidator(_nameController.text) ==null &&
-                          Validators.emailValidator(_emailController.text) == null &&
-                          Validators.phoneValidator(_phoneController.text) == null &&
-                          Validators.addressValidator(_addressController.text) == null &&
-                          Validators.passwordValidator(_passwordController.text) == null &&
-                              _formKey.currentState?.validate() == true)
-                          ? registerUser
-                          : null,
-                      colorFondo: Colors.redAccent,
-                    ),
-                    SizedBox(height: screenHeight * 0.04),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        const Text(
-                          '¿Tienes Cuenta?',
-                          style: TextStyle(fontSize: 14.0, color: Colors.white),
-                        ),
-                        SizedBox(width: screenWidth * 0.02),
-                        GestureDetector(
-                          onTap: () {
-                            FocusScope.of(context).unfocus();
-                            _formKey.currentState?.reset();
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const LoginScreen(),
-                              ),
-                            );
-                          },
-                          child: const Text(
-                            'Iniciar Sesión',
-                            style: TextStyle(
-                                fontSize: 14.0, color: Colors.redAccent),
-                          ),
-                        ),
-                      ],
-                    ),
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.05),
+                    _buildRegisterButton(),
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.04),
+                    _buildLoginPrompt(),
                   ],
                 ),
               ),
@@ -214,6 +166,80 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return const HeaderText(
+      title: 'Crea Tu Cuenta',
+      description1: 'Disfruta miles de libros en la palma',
+      description2: 'de tu mano',
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hintText,
+    required IconData icon,
+    bool obscureText = false,
+    TextInputType keyboardType = TextInputType.text,
+    int? maxLength,
+    String? Function(String?)? validator,
+  }) {
+    return CustomTextField(
+      controller: controller,
+      hintText: hintText,
+      icon: icon,
+      obscureText: obscureText,
+      keyboardType: keyboardType,
+      maxLength: maxLength,
+      validator: validator,
+    );
+  }
+
+  Widget _buildRegisterButton() {
+    return CustomButton(
+      text: 'Registrarse',
+      onPressed: _canRegister() ? _registerUser : null,
+      colorFondo: Colors.redAccent,
+    );
+  }
+
+  bool _canRegister() {
+    return Validators.requiredFieldValidator(_nameController.text) == null &&
+        Validators.emailValidator(_emailController.text) == null &&
+        Validators.phoneValidator(_phoneController.text) == null &&
+        Validators.addressValidator(_addressController.text) == null &&
+        Validators.passwordValidator(_passwordController.text) == null &&
+        _formKey.currentState?.validate() == true;
+  }
+
+  Widget _buildLoginPrompt() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        const Text(
+          '¿Tienes Cuenta?',
+          style: TextStyle(fontSize: 14.0, color: Colors.white),
+        ),
+        SizedBox(width: MediaQuery.of(context).size.width * 0.02),
+        GestureDetector(
+          onTap: () {
+            FocusScope.of(context).unfocus();
+            _formKey.currentState?.reset();
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const LoginPage(),
+              ),
+            );
+          },
+          child: const Text(
+            'Iniciar Sesión',
+            style: TextStyle(fontSize: 14.0, color: Colors.redAccent),
+          ),
+        ),
+      ],
     );
   }
 }

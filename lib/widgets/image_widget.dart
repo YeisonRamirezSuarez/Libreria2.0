@@ -24,23 +24,22 @@ class _ImageWidgetState extends State<ImageWidget> {
   @override
   void initState() {
     super.initState();
-    // Inicializamos la imagen
     _loadImage();
   }
 
   @override
   void didUpdateWidget(ImageWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Si la URL de la imagen cambia, volvemos a cargar la imagen
     if (widget.imageUrl != oldWidget.imageUrl) {
-      _isLoading = true;
-      _hasError = false;
+      setState(() {
+        _isLoading = true;
+        _hasError = false;
+      });
       _loadImage();
     }
   }
 
   void _loadImage() {
-    // Validamos que la URL sea válida
     if (widget.imageUrl.isEmpty || !Uri.parse(widget.imageUrl).isAbsolute) {
       setState(() {
         _isLoading = false;
@@ -53,9 +52,8 @@ class _ImageWidgetState extends State<ImageWidget> {
       widget.imageUrl,
       fit: BoxFit.contain,
       width: widget.width * 1.2,
-      height: widget.height * 1.1, 
+      height: widget.height * 1.1,
       errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
-        // Muestra el ícono de error personalizado en caso de fallo
         return const Icon(
           Icons.error,
           color: Colors.red,
@@ -64,7 +62,6 @@ class _ImageWidgetState extends State<ImageWidget> {
       },
     );
 
-    // Intentamos cargar la imagen
     final ImageStream stream = image.image.resolve(const ImageConfiguration());
     stream.addListener(
       ImageStreamListener(

@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:libreria_app/models/book_model.dart';
 import 'package:libreria_app/models/usuario_model.dart';
 import 'package:libreria_app/pages/user_libros_disponibles_page.dart';
-import 'package:libreria_app/services/api_services.dart';
-import 'package:libreria_app/services/dialog_service.dart';
-import 'package:libreria_app/widgets/custom_widgets.dart'; // Asegúrate de que el import es correcto
-import 'package:libreria_app/widgets/form_libro_register.dart'; // Asegúrate de que el import es correcto
+import 'package:libreria_app/services/api_service.dart';
+import 'package:libreria_app/services/snack_bar_service.dart';
+import 'package:libreria_app/widgets/custom_widgets.dart';
 
 class UpdateLibroPage extends StatefulWidget {
   final String name;
@@ -24,10 +23,10 @@ class UpdateLibroPage extends StatefulWidget {
   });
 
   @override
-  _UpdateLibroPageState createState() => _UpdateLibroPageState();
+  UpdateLibroPageState createState() => UpdateLibroPageState();
 }
 
-class _UpdateLibroPageState extends State<UpdateLibroPage> {
+class UpdateLibroPageState extends State<UpdateLibroPage> {
   final _formKey = GlobalKey<FormState>();
   final _tituloController = TextEditingController();
   final _autorController = TextEditingController();
@@ -37,16 +36,13 @@ class _UpdateLibroPageState extends State<UpdateLibroPage> {
   final _descripcionController = TextEditingController();
   AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
 
+  final ApiService _apiService = ApiService(); // Crear una instancia de ApiService
+
+
   @override
   void initState() {
     super.initState();
-    // Inicializa los campos del formulario con los datos actuales del libro
-    _tituloController.text = widget.usuario.title;
-    _autorController.text = widget.usuario.author;
-    _cantidadController.text = widget.cantidadLibro;
-    _urlLibroController.text = widget.usuario.bookUrl;
-    _urlImagenController.text = widget.usuario.imageUrl;
-    _descripcionController.text = widget.usuario.description;
+    _initializeControllers();
   }
 
   @override
@@ -58,6 +54,15 @@ class _UpdateLibroPageState extends State<UpdateLibroPage> {
     _urlImagenController.dispose();
     _descripcionController.dispose();
     super.dispose();
+  }
+
+  void _initializeControllers() {
+    _tituloController.text = widget.usuario.title;
+    _autorController.text = widget.usuario.author;
+    _cantidadController.text = widget.cantidadLibro;
+    _urlLibroController.text = widget.usuario.bookUrl;
+    _urlImagenController.text = widget.usuario.imageUrl;
+    _descripcionController.text = widget.usuario.description;
   }
 
   Future<void> _updateLibro() async {
@@ -79,34 +84,47 @@ class _UpdateLibroPageState extends State<UpdateLibroPage> {
     );
 
     try {
-      final response = await ApiService.updateBook(book);
+      final response = await _apiService.updateBook(book);
+
+      if (!mounted) return;
+
       if (response.success) {
-        DialogService.showSuccessSnackBar(
-            context, 'Libro actualizado exitosamente');
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-              builder: (context) => const UserLibrosDisponiblesPage(
-                 isPrincipal: false,
-                  )),
-        );
+        _showSuccessDialog();
       } else {
-        DialogService.showErrorSnackBar(
-            context, response.error ?? 'Error desconocido');
+        _showErrorDialog(response.error ?? 'Error desconocido');
       }
     } catch (error) {
-      DialogService.showErrorSnackBar(context, 'Error de red: $error');
+      if (mounted) {
+        _showErrorDialog('Error de red: $error');
+      }
     }
+  }
+
+  void _showSuccessDialog() {
+    SnackBarService.showSuccessSnackBar(
+      context,
+      'Libro actualizado exitosamente',
+    );
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>  UserLibrosDisponiblesPage(isPrincipal: false),
+      ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    SnackBarService.showErrorSnackBar(
+      context,
+      message,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
 
-    return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-      },
+    return KeyboardDismiss(
       child: SafeArea(
         child: Scaffold(
           body: SingleChildScrollView(
@@ -115,38 +133,45 @@ class _UpdateLibroPageState extends State<UpdateLibroPage> {
               padding: EdgeInsets.all(screenWidth * 0.01),
               child: Column(
                 children: [
-                  ItemBannerUser(
-                    seaching: false,
-                    titleBaner: "Actualizar libro",
-                    rolUser: widget.rol,
-                    nameUser: widget.name,
-                    deleteBook: true,
-                    idLibro: widget.usuario.idBook,
-                    selectedIcon: widget.selectedIcon,
-                    viewAdd: false,
-                    viewVolver: true,
-                  ),
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-                  FormLibro(
-                    formKey: _formKey,
-                    autoValidateMode: _autoValidateMode,
-                    tituloController: _tituloController,
-                    autorController: _autorController,
-                    cantidadController: _cantidadController,
-                    urlLibroController: _urlLibroController,
-                    urlImagenController: _urlImagenController,
-                    descripcionController: _descripcionController,
-                    onPressed: _updateLibro,
-                    name: widget.name,
-                    rol: widget.rol,
-                    botonTitle: "Actualizar Libro",
-                  ),
+                  _buildHeader(),
+                  _buildForm(),
                 ],
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return ItemBannerUser(
+      seaching: false,
+      titleBaner: "Actualizar libro",
+      rolUser: widget.rol,
+      nameUser: widget.name,
+      deleteBook: true,
+      idLibro: widget.usuario.idBook,
+      selectedIcon: widget.selectedIcon,
+      viewAdd: false,
+      viewVolver: true,
+    );
+  }
+
+  Widget _buildForm() {
+    return FormLibro(
+      formKey: _formKey,
+      autoValidateMode: _autoValidateMode,
+      tituloController: _tituloController,
+      autorController: _autorController,
+      cantidadController: _cantidadController,
+      urlLibroController: _urlLibroController,
+      urlImagenController: _urlImagenController,
+      descripcionController: _descripcionController,
+      onPressed: _updateLibro,
+      name: widget.name,
+      rol: widget.rol,
+      botonTitle: "Actualizar Libro",
     );
   }
 }

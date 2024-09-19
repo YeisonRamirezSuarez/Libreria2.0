@@ -61,63 +61,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
             maxLines: widget.maxLines,
             minLines: widget.minLines,
             maxLength: widget.maxLength,
-            decoration: InputDecoration(
-              labelText: widget.hintText,
-              labelStyle: const TextStyle(
-                color: Colors.white,
-                fontSize: 18.0,
-              ),
-              prefixIcon: Icon(widget.icon, color: Theme.of(context).inputDecorationTheme.prefixIconColor),
-              suffixIcon: widget.obscureText
-                  ? IconButton(
-                      icon: Icon(
-                        _obscureText ? Icons.visibility : Icons.visibility_off,
-                        color: Theme.of(context).inputDecorationTheme.suffixIconColor,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscureText = !_obscureText;
-                        });
-                      },
-                    )
-                  : widget.suffixIcon != null
-                      ? Icon(widget.suffixIcon, color: Theme.of(context).inputDecorationTheme.suffixIconColor)
-                      : null,
-              border: InputBorder.none,
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(
-                  color: _errorText != null ? Colors.redAccent : Colors.white,
-                  width: 2.0,
-                ),
-              ),
-              focusedBorder: const UnderlineInputBorder(
-                borderSide: BorderSide(
-                  color: Colors.redAccent,
-                  width: 2.0,
-                ),
-              ),
-              errorBorder: const UnderlineInputBorder(
-                borderSide: BorderSide(
-                  color: Colors.redAccent,
-                  width: 2.0,
-                ),
-              ),
-              focusedErrorBorder: const UnderlineInputBorder(
-                borderSide: BorderSide(
-                  color: Colors.redAccent,
-                  width: 2.0,
-                ),
-              ),
-              contentPadding: EdgeInsets.symmetric(
-                vertical: screenHeight * 0.02,
-                horizontal: screenWidth * 0.04,
-              ),
-              errorStyle: const TextStyle(
-                color: Colors.redAccent,
-                fontSize: 14.0,
-              ),
-              counterText: '', // Hide the character counter
-            ),
+            decoration: _inputDecoration(context, screenWidth, screenHeight),
             style: const TextStyle(color: Colors.white, fontSize: 16.0),
             onChanged: (value) {
               final error = widget.validator?.call(value);
@@ -133,7 +77,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
               return null; // Return null here to let custom error handling manage the display
             },
           ),
-          if (_errorText != null) // Show error message inside the TextFormField
+          if (_errorText != null)
             Positioned(
               right: 10.0,
               top: 0.0,
@@ -145,59 +89,68 @@ class _CustomTextFieldState extends State<CustomTextField> {
                 ),
               ),
             ),
-            
         ],
-        
       ),
     );
   }
-}
 
-class HeaderText extends StatelessWidget {
-  final String title;
-  final String description1;
-  final String description2;
-
-  const HeaderText({
-    required this.title,
-    required this.description1,
-    required this.description2,
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    return Column(
-      children: <Widget>[
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 35.0,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-          textAlign: TextAlign.center,
+  InputDecoration _inputDecoration(BuildContext context, double screenWidth, double screenHeight) {
+    return InputDecoration(
+      labelText: widget.hintText,
+      labelStyle: const TextStyle(
+        color: Colors.white,
+        fontSize: 18.0,
+      ),
+      prefixIcon: Icon(widget.icon, color: Theme.of(context).inputDecorationTheme.prefixIconColor),
+      suffixIcon: widget.obscureText
+          ? IconButton(
+              icon: Icon(
+                _obscureText ? Icons.visibility : Icons.visibility_off,
+                color: Theme.of(context).inputDecorationTheme.suffixIconColor,
+              ),
+              onPressed: () {
+                setState(() {
+                  _obscureText = !_obscureText;
+                });
+              },
+            )
+          : widget.suffixIcon != null
+              ? Icon(widget.suffixIcon, color: Theme.of(context).inputDecorationTheme.suffixIconColor)
+              : null,
+      border: InputBorder.none,
+      enabledBorder: UnderlineInputBorder(
+        borderSide: BorderSide(
+          color: _errorText != null ? Colors.redAccent : Colors.white,
+          width: 2.0,
         ),
-        SizedBox(height: screenWidth * 0.02), // Ajuste del espacio entre el título y descripciones
-        Text(
-          description1,
-          style: TextStyle(
-            fontSize: screenWidth * 0.045,
-            color: const Color(0xFF636060),
-          ),
-          textAlign: TextAlign.center,
+      ),
+      focusedBorder: const UnderlineInputBorder(
+        borderSide: BorderSide(
+          color: Colors.redAccent,
+          width: 2.0,
         ),
-        Text(
-          description2,
-          style: TextStyle(
-            fontSize: screenWidth * 0.045,
-            color: const Color(0xFF636060),
-          ),
-          textAlign: TextAlign.center,
+      ),
+      errorBorder: const UnderlineInputBorder(
+        borderSide: BorderSide(
+          color: Colors.redAccent,
+          width: 2.0,
         ),
-      ],
+      ),
+      focusedErrorBorder: const UnderlineInputBorder(
+        borderSide: BorderSide(
+          color: Colors.redAccent,
+          width: 2.0,
+        ),
+      ),
+      contentPadding: EdgeInsets.symmetric(
+        vertical: screenHeight * 0.02,
+        horizontal: screenWidth * 0.04,
+      ),
+      errorStyle: const TextStyle(
+        color: Colors.redAccent,
+        fontSize: 14.0,
+      ),
+      counterText: '', // Hide the character counter
     );
   }
 }

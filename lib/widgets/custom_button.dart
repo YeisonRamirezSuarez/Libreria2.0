@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:libreria_app/widgets/custom_widgets.dart';
 
 class CustomButton extends StatelessWidget {
   final String text;
@@ -18,14 +19,10 @@ class CustomButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ElevatedButton(
       onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: colorFondo, // Color personalizado para el botón
-        foregroundColor: Colors.white, // Color del texto del botón
-        minimumSize: Size(double.infinity, dimensioneBoton),
-        textStyle: const TextStyle(fontSize: 20.0),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20.0),
-        ),
+      style: ButtonStyles.elevatedButtonStyle(
+        backgroundColor: colorFondo,
+        minWidth: double.infinity,
+        height: dimensioneBoton,
       ),
       child: Text(text),
     );

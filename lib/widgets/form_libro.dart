@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:libreria_app/utils/validators.dart';
-import 'package:libreria_app/widgets/custom_widgets.dart';
+import 'package:libreria_app/widgets/custom_text_field.dart';
+import 'package:libreria_app/widgets/custom_button.dart';
 
 class FormLibro extends StatelessWidget {
   final GlobalKey<FormState> formKey;
@@ -11,7 +12,7 @@ class FormLibro extends StatelessWidget {
   final TextEditingController urlLibroController;
   final TextEditingController urlImagenController;
   final TextEditingController descripcionController;
-  final VoidCallback onPressed; // O VoidCallback si no pasas argumentos
+  final VoidCallback? onPressed; // Make this nullable
   final String name;
   final String rol;
   final String botonTitle;
@@ -26,7 +27,7 @@ class FormLibro extends StatelessWidget {
     required this.urlLibroController,
     required this.urlImagenController,
     required this.descripcionController,
-    required this.onPressed,
+    this.onPressed, // Allow this to be nullable
     required this.name,
     required this.rol,
     required this.botonTitle,
@@ -110,7 +111,7 @@ class FormLibro extends StatelessWidget {
             SizedBox(height: screenHeight * 0.02),
             CustomButton(
               text: botonTitle,
-              onPressed: _getOnPressedCallback(),
+              onPressed: _getOnPressedCallback(), // Pass the callback directly
               colorFondo: Colors.redAccent,
             ),
           ],

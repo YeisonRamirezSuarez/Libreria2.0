@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/pages/login_page.dart';
-import 'package:libreria_app/services/dialog_service.dart';
+import 'package:libreria_app/services/snack_bar_service.dart';
 import 'package:libreria_app/widgets/custom_widgets.dart';
 
 class UserEditWidget extends StatefulWidget {
@@ -11,19 +10,19 @@ class UserEditWidget extends StatefulWidget {
   final Function() onCancel;
 
   const UserEditWidget({
-    Key? key,
+    super.key,
     required this.availableIcons,
     required this.initialName,
     required this.selectedIcon,
     required this.onSave,
     required this.onCancel,
-  }) : super(key: key);
+  });
 
   @override
-  _UserEditWidgetState createState() => _UserEditWidgetState();
+  UserEditWidgetState createState() => UserEditWidgetState();
 }
 
-class _UserEditWidgetState extends State<UserEditWidget> {
+class UserEditWidgetState extends State<UserEditWidget> {
   late IconData _tempSelectedIcon;
   late TextEditingController _tempNameController;
 
@@ -61,7 +60,7 @@ class _UserEditWidgetState extends State<UserEditWidget> {
                 decoration: BoxDecoration(
                   color: Colors.black,
                   borderRadius: BorderRadius.circular(8.0),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(
                       color: Colors.black26,
                       blurRadius: 8.0,
@@ -147,7 +146,7 @@ class _UserEditWidgetState extends State<UserEditWidget> {
                               onPressed: () {
                                 widget.onSave(_tempSelectedIcon,
                                     _tempNameController.text);
-                                DialogService.showSuccessSnackBar(
+                                SnackBarService.showSuccessSnackBar(
                                     context, 'Usuario editado con éxito');
                               },
                               dimensioneBoton: buttonSize,

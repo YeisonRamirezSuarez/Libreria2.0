@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:libreria_app/models/api_response_models/api_response_registrer.dart';
 import 'package:libreria_app/models/book_model.dart';
 import 'package:libreria_app/pages/user_libros_disponibles_page.dart';
-import 'package:libreria_app/services/api_services.dart';
-import 'package:libreria_app/services/dialog_service.dart';
+import 'package:libreria_app/services/api_service.dart';
+import 'package:libreria_app/services/snack_bar_service.dart';
 import 'package:libreria_app/widgets/custom_widgets.dart';
 
 class RegisterLibroPage extends StatefulWidget {
@@ -10,13 +11,18 @@ class RegisterLibroPage extends StatefulWidget {
   final String rol;
   final IconData selectedIcon;
 
-  const RegisterLibroPage({super.key, required this.name, required this.rol, required this.selectedIcon});
+  const RegisterLibroPage({
+    super.key,
+    required this.name,
+    required this.rol,
+    required this.selectedIcon,
+  });
 
   @override
-  _RegisterLibroPageState createState() => _RegisterLibroPageState();
+  RegisterLibroPageState createState() => RegisterLibroPageState();
 }
 
-class _RegisterLibroPageState extends State<RegisterLibroPage> {
+class RegisterLibroPageState extends State<RegisterLibroPage> {
   final _formKey = GlobalKey<FormState>();
   final _tituloController = TextEditingController();
   final _autorController = TextEditingController();
@@ -25,6 +31,8 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
   final _urlImagenController = TextEditingController();
   final _descripcionController = TextEditingController();
   AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
+
+  final ApiService _apiService = ApiService(); // Crear una instancia de ApiService
 
   @override
   void dispose() {
@@ -37,7 +45,7 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
     super.dispose();
   }
 
-  Future<void> registerLibro() async {
+  Future<void> _registerLibro() async {
     if (!_formKey.currentState!.validate()) {
       setState(() {
         _autoValidateMode = AutovalidateMode.always;
@@ -55,36 +63,40 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
     );
 
     try {
-      final response = await ApiService.registerBook(book);
+      final ApiResponseRegistrer response = await _apiService.registerBook(book); // Llamar a través de la instancia
+
+      if (!mounted) return;
 
       if (response.success) {
-        DialogService.showSuccessSnackBar(
-            context, 'Libro registrado exitosamente');
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-              builder: (context) => const UserLibrosDisponiblesPage(
-                isPrincipal: false,
-                  )),
-        );
+        _showSuccessDialog();
       } else {
-        DialogService.showErrorSnackBar(
-            context, response.error ?? 'Error desconocido');
+        _showErrorDialog(response.error ?? 'Error desconocido');
       }
     } catch (error) {
-      DialogService.showErrorSnackBar(context, 'Error de red: $error');
+      if (!mounted) return;
+      _showErrorDialog('Error de red: $error');
     }
+  }
+
+  void _showSuccessDialog() {
+    SnackBarService.showSuccessSnackBar(context, 'Libro registrado exitosamente');
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>  UserLibrosDisponiblesPage(isPrincipal: false),
+      ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    SnackBarService.showErrorSnackBar(context, message);
   }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
 
-    return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-      },
+    return KeyboardDismiss(
       child: SafeArea(
         child: Scaffold(
           body: SingleChildScrollView(
@@ -93,35 +105,43 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
               padding: EdgeInsets.all(screenWidth * 0.01),
               child: Column(
                 children: [
-                  ItemBannerUser(
-                    seaching: false,
-                    titleBaner: "Agregar libro",
-                    rolUser: widget.rol,
-                    nameUser: widget.name,
-                    selectedIcon: widget.selectedIcon,
-                    viewAdd: false,
-                    viewVolver: true,
-                  ),
-                  FormLibro(
-                    formKey: _formKey,
-                    autoValidateMode: _autoValidateMode,
-                    tituloController: _tituloController,
-                    autorController: _autorController,
-                    cantidadController: _cantidadController,
-                    urlLibroController: _urlLibroController,
-                    urlImagenController: _urlImagenController,
-                    descripcionController: _descripcionController,
-                    onPressed: registerLibro,
-                    name: widget.name,
-                    rol: widget.rol,
-                    botonTitle: "Agregar Libro",
-                  ),
+                  _buildHeader(),
+                  _buildForm(),
                 ],
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return ItemBannerUser(
+      seaching: false,
+      titleBaner: "Agregar libro",
+      rolUser: widget.rol,
+      nameUser: widget.name,
+      selectedIcon: widget.selectedIcon,
+      viewAdd: false,
+      viewVolver: true,
+    );
+  }
+
+  Widget _buildForm() {
+    return FormLibro(
+      formKey: _formKey,
+      autoValidateMode: _autoValidateMode,
+      tituloController: _tituloController,
+      autorController: _autorController,
+      cantidadController: _cantidadController,
+      urlLibroController: _urlLibroController,
+      urlImagenController: _urlImagenController,
+      descripcionController: _descripcionController,
+      onPressed: _registerLibro,
+      name: widget.name,
+      rol: widget.rol,
+      botonTitle: "Agregar Libro",
     );
   }
 }
