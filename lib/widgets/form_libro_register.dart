@@ -17,7 +17,7 @@ class FormLibro extends StatelessWidget {
   final String botonTitle;
 
   const FormLibro({
-    Key? key,
+    super.key,
     required this.formKey,
     required this.autoValidateMode,
     required this.tituloController,
@@ -30,7 +30,7 @@ class FormLibro extends StatelessWidget {
     required this.name,
     required this.rol,
     required this.botonTitle,
-  }) : super(key: key);
+  });
 
   VoidCallback? _getOnPressedCallback() {
     bool isFormValid = Validators.requiredFieldValidator(tituloController.text) == null &&

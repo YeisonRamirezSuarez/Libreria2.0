@@ -1,3 +1,3 @@
 class AppConfig {
-  static const String baseUrl = 'http://179.12.74.98:2010/New_libreria/api/';
+  static const String baseUrl = 'http://172.20.10.2:80/libreria/api/';
 }

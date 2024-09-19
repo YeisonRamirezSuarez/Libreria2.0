@@ -65,7 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final response = await _apiService
           .login(email, password)
-          .timeout(Duration(seconds: 5));
+          .timeout(const Duration(seconds: 5));
 
       if (response.user != null) {
         _navigateBasedOnRole(response.user!.role);

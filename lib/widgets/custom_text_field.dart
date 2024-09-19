@@ -90,20 +90,20 @@ class _CustomTextFieldState extends State<CustomTextField> {
                   width: 2.0,
                 ),
               ),
-              focusedBorder: UnderlineInputBorder(
-                borderSide: const BorderSide(
+              focusedBorder: const UnderlineInputBorder(
+                borderSide: BorderSide(
                   color: Colors.redAccent,
                   width: 2.0,
                 ),
               ),
-              errorBorder: UnderlineInputBorder(
-                borderSide: const BorderSide(
+              errorBorder: const UnderlineInputBorder(
+                borderSide: BorderSide(
                   color: Colors.redAccent,
                   width: 2.0,
                 ),
               ),
-              focusedErrorBorder: UnderlineInputBorder(
-                borderSide: const BorderSide(
+              focusedErrorBorder: const UnderlineInputBorder(
+                borderSide: BorderSide(
                   color: Colors.redAccent,
                   width: 2.0,
                 ),

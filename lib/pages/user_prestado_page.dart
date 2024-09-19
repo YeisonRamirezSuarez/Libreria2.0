@@ -149,7 +149,7 @@ class _UserPrestadoPageState extends State<UserPrestadoPage> {
 Widget _buildBottomContent(BuildContext context) {
   // Este método crea el contenido fijo en la parte inferior
   return Container(
-    margin: EdgeInsets.symmetric(horizontal: 12),
+    margin: const EdgeInsets.symmetric(horizontal: 12),
     color: Colors.black, // Configura el color de fondo si es necesario
     child: Column(
       mainAxisSize: MainAxisSize.min, // Solo ocupa el espacio necesario

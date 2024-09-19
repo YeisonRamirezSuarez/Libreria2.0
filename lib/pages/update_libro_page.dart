@@ -14,12 +14,12 @@ class UpdateLibroPage extends StatefulWidget {
   final Usuario usuario;
 
   const UpdateLibroPage({
-    Key? key,
+    super.key,
     required this.name,
     required this.rol,
     required this.cantidadLibro,
     required this.usuario,
-  }) : super(key: key);
+  });
 
   @override
   _UpdateLibroPageState createState() => _UpdateLibroPageState();
@@ -83,7 +83,10 @@ class _UpdateLibroPageState extends State<UpdateLibroPage> {
             context, 'Libro actualizado exitosamente');
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const UserLibrosDisponiblesPage(isPrincipal: true,)),
+          MaterialPageRoute(
+              builder: (context) => const UserLibrosDisponiblesPage(
+                    isPrincipal: true,
+                  )),
         );
       } else {
         DialogService.showErrorSnackBar(
@@ -116,7 +119,7 @@ class _UpdateLibroPageState extends State<UpdateLibroPage> {
                     titleBaner: "Actualizar libro",
                     rolUser: widget.rol,
                     nameUser: widget.name,
-                    deleteBook : true,
+                    deleteBook: true,
                     idLibro: widget.usuario.idBook,
                   ),
                   SizedBox(height: MediaQuery.of(context).size.height * 0.01),

@@ -77,7 +77,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
 
     try {
       final response =
-          await ApiService.registerUser(user).timeout(Duration(seconds: 5));
+          await ApiService.registerUser(user).timeout(const Duration(seconds: 5));
 
       if (response.success) {
         DialogService.showSuccessSnackBar(context, 'Registro exitoso');
@@ -119,7 +119,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    HeaderText(
+                    const HeaderText(
                       title: 'Crea Tu Cuenta',
                       description1: 'Disfruta miles de libros en la palma',
                       description2: 'de tu mano',

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:libreria_app/models/login_model.dart';
 import 'package:libreria_app/models/usuario_model.dart';
 import 'package:libreria_app/services/api_services.dart';
-import 'package:libreria_app/widgets/card_libro_history.dart';
 import 'package:libreria_app/widgets/custom_widgets.dart';
 
 class BookDetailHistoryPage extends StatelessWidget {

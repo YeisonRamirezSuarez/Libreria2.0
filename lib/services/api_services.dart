@@ -277,8 +277,9 @@ class ApiService {
 
   static Future<List<UsuarioPrestado>> fetchUsuariosConLibrosPrestados(
       String idBook) async {
-    final url = Uri.parse(
-        'http://179.12.74.98:2010/New_libreria/api/peticiones.php?prestado=1&id=$idBook');
+    print('idBook: $idBook');
+    final url =
+        Uri.parse('${AppConfig.baseUrl}/peticiones.php?prestado=1&id=$idBook');
 
     final response = await http.get(url);
 

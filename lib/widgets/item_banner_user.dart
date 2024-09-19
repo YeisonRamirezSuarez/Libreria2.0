@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:libreria_app/models/api_response.dart';
+import 'package:libreria_app/pages/login_page.dart';
 import 'package:libreria_app/pages/user_libros_disponibles_page.dart';
 import 'package:libreria_app/services/api_services.dart';
 import 'package:libreria_app/services/dialog_service.dart';
@@ -17,6 +18,8 @@ class ItemBannerUser extends StatefulWidget {
   final String idLibro;
   final Function(String)? searchCallback; // Callback para la búsqueda
   final List<IconData> availableIcons; // Lista de íconos disponibles
+  final bool removerBanner;
+  final bool removerOption;
 
   ItemBannerUser({
     super.key,
@@ -53,6 +56,8 @@ class ItemBannerUser extends StatefulWidget {
       Icons.help,
       Icons.info,
     ],
+    this.removerBanner = false,
+    this.removerOption = false,
   });
 
   @override
@@ -61,8 +66,8 @@ class ItemBannerUser extends StatefulWidget {
 
 class _ItemBannerUserState extends State<ItemBannerUser> {
   late FocusNode _searchFocusNode;
-  TextEditingController _searchController = TextEditingController();
-  TextEditingController _nameController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
   IconData _selectedIcon = Icons.person; // Estado del ícono seleccionado
 
   @override
@@ -78,7 +83,8 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
 
     _searchController.addListener(() {
       if (widget.searchCallback != null) {
-        widget.searchCallback!(_searchController.text); // Llama al callback cuando cambia el texto
+        widget.searchCallback!(
+            _searchController.text); // Llama al callback cuando cambia el texto
       }
     });
   }
@@ -100,7 +106,9 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
             context, 'Libro eliminado exitosamente');
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => UserLibrosDisponiblesPage(isPrincipal: true)),
+          MaterialPageRoute(
+              builder: (context) =>
+                  const UserLibrosDisponiblesPage(isPrincipal: true)),
         );
       } else {
         DialogService.showErrorSnackBar(
@@ -113,7 +121,8 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
 
   void _showEditDialog() {
     IconData tempSelectedIcon = _selectedIcon;
-    TextEditingController tempNameController = TextEditingController(text: _nameController.text);
+    TextEditingController tempNameController =
+        TextEditingController(text: _nameController.text);
 
     showDialog(
       context: context,
@@ -121,22 +130,44 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
             return AlertDialog(
-              title: const Text('Editar Usuario'),
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Editar Usuario'),
+                  // Icono de cerrar sesión
+                  IconButton(
+                    icon: const Icon(Icons.logout, color: Colors.redAccent),
+                    onPressed: () {
+                      // Aquí puedes agregar la lógica para cerrar sesión
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LoginScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
               content: SizedBox(
-                width: double.maxFinite, // Asegura que el contenido use el máximo ancho posible
+                width: double
+                    .maxFinite, // Asegura que el contenido use el máximo ancho posible
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // Selector de ícono
-                    Text('Selecciona un ícono:'),
+                    const Text('Selecciona un ícono:'),
                     const SizedBox(height: 10),
-                    Container(
+                    SizedBox(
                       height: 150.0, // Ajusta la altura según sea necesario
                       child: GridView.builder(
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 4, // Número de íconos por fila
-                          crossAxisSpacing: 10.0, // Espacio horizontal entre íconos
-                          mainAxisSpacing: 10.0, // Espacio vertical entre íconos
+                          crossAxisSpacing:
+                              10.0, // Espacio horizontal entre íconos
+                          mainAxisSpacing:
+                              10.0, // Espacio vertical entre íconos
                         ),
                         itemCount: widget.availableIcons.length,
                         itemBuilder: (BuildContext context, int index) {
@@ -145,12 +176,14 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
                           return GestureDetector(
                             onTap: () {
                               setState(() {
-                                tempSelectedIcon = icon; // Actualiza el ícono seleccionado temporal
+                                tempSelectedIcon =
+                                    icon; // Actualiza el ícono seleccionado temporal
                               });
                             },
                             child: Icon(
                               icon,
-                              color: isSelected ? Colors.blue : Colors.white,
+                              color:
+                                  isSelected ? Colors.redAccent : Colors.white,
                               size: 40.0,
                             ),
                           );
@@ -170,18 +203,26 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
                 TextButton(
                   onPressed: () {
                     setState(() {
-                      _selectedIcon = tempSelectedIcon; // Guarda el ícono seleccionado en el estado del widget
-                      widget.nameUser = tempNameController.text; // Guarda el nombre en el estado del widget
+                      _selectedIcon =
+                          tempSelectedIcon; // Guarda el ícono seleccionado en el estado del widget
+                      widget.nameUser = tempNameController
+                          .text; // Guarda el nombre en el estado del widget
                     });
                     Navigator.pop(context);
                   },
-                  child: const Text('Guardar'),
+                  child: const Text(
+                    'Guardar',
+                    style: TextStyle(color: Colors.redAccent),
+                  ),
                 ),
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: const Text('Cancelar'),
+                  child: const Text(
+                    'Cancelar',
+                    style: TextStyle(color: Colors.redAccent),
+                  ),
                 ),
               ],
             );
@@ -202,92 +243,96 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Container(
-              color: Colors.black,
-              child: Row(
-                children: <Widget>[
-                  GestureDetector(
-                    onTap: (widget.isPrincipal) ? _showEditDialog : null,
-                    child: CircleAvatar(
-                      radius: 30.0,
-                      backgroundColor: Colors.grey[200],
-                      child: Icon(
-                        _selectedIcon, // Mostrar ícono seleccionado
-                        size: 30,
-                        color: Colors.black,
+            if (!widget.removerBanner)
+              Container(
+                color: Colors.black,
+                child: Row(
+                  children: <Widget>[
+                    GestureDetector(
+                      onTap: (widget.isPrincipal) ? _showEditDialog : null,
+                      child: CircleAvatar(
+                        radius: 30.0,
+                        backgroundColor: Colors.grey[200],
+                        child: Icon(
+                          _selectedIcon, // Mostrar ícono seleccionado
+                          size: 30,
+                          color: Colors.black,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 20.0),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          widget.rolUser,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18.0,
+                    const SizedBox(width: 20.0),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            widget.rolUser,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18.0,
+                            ),
                           ),
-                        ),
-                        Text(
-                          widget.nameUser,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15.0,
+                          Text(
+                            widget.nameUser,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 15.0,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  if (widget.estadoUsuario)
-                    IconButton(
-                      icon: const Icon(Icons.add),
-                      iconSize: 50.0,
-                      color: Colors.redAccent,
-                      onPressed: () {
-                        showModalBottomSheet(
-                          backgroundColor: Colors.redAccent,
-                          context: context,
-                          builder: (BuildContext context) {
-                            return Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: widget.options.map((option) {
-                                  return ListTile(
-                                    leading: option.icon,
-                                    iconColor: Colors.white,
-                                    title: Text(
-                                      option.title,
-                                      style: const TextStyle(color: Colors.white),
-                                    ),
-                                    onTap: () {
-                                      Navigator.pop(context); // Cierra el modal
-                                      option.onTap(); // Ejecuta la función onTap
-                                    },
-                                  );
-                                }).toList(),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                      tooltip: 'Funciones de usuario',
-                    )
-                  else
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      iconSize: 50.0,
-                      color: Colors.redAccent,
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      tooltip: 'Volver',
-                    ),
-                ],
+                    if (widget.estadoUsuario)
+                      IconButton(
+                        icon: const Icon(Icons.add),
+                        iconSize: 50.0,
+                        color: Colors.redAccent,
+                        onPressed: () {
+                          showModalBottomSheet(
+                            backgroundColor: Colors.redAccent,
+                            context: context,
+                            builder: (BuildContext context) {
+                              return Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: widget.options.map((option) {
+                                    return ListTile(
+                                      leading: option.icon,
+                                      iconColor: Colors.white,
+                                      title: Text(
+                                        option.title,
+                                        style: const TextStyle(
+                                            color: Colors.white),
+                                      ),
+                                      onTap: () {
+                                        Navigator.pop(
+                                            context); // Cierra el modal
+                                        option
+                                            .onTap(); // Ejecuta la función onTap
+                                      },
+                                    );
+                                  }).toList(),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                        tooltip: 'Funciones de usuario',
+                      )
+                    else if (!widget.removerOption)
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        iconSize: 50.0,
+                        color: Colors.redAccent,
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        tooltip: 'Volver',
+                      ),
+                  ],
+                ),
               ),
-            ),
             const SizedBox(height: 10.0),
             Visibility(
               visible: widget.seaching,
@@ -335,7 +380,9 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
                             context,
                             MaterialPageRoute(
                                 builder: (context) =>
-                                    const UserLibrosDisponiblesPage(isPrincipal: true,)));
+                                    const UserLibrosDisponiblesPage(
+                                      isPrincipal: true,
+                                    )));
                       },
                     ),
                 ],

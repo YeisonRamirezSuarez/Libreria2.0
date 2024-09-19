@@ -62,7 +62,10 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const UserLibrosDisponiblesPage(isPrincipal: true,)),
+          MaterialPageRoute(
+              builder: (context) => const UserLibrosDisponiblesPage(
+                    isPrincipal: true,
+                  )),
         );
       } else {
         DialogService.showErrorSnackBar(
@@ -95,6 +98,7 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
                     titleBaner: "Agregar libro",
                     rolUser: widget.rol,
                     nameUser: widget.name,
+                    removerBanner: true,
                   ),
                   FormLibro(
                     formKey: _formKey,
