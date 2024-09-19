@@ -9,6 +9,7 @@ import 'package:libreria_app/pages/user_detalle_libro_history.dart';
 import 'package:libreria_app/services/api_services.dart';
 import 'package:libreria_app/services/shared_preferences.dart';
 import 'package:libreria_app/widgets/custom_widgets.dart';
+import 'package:libreria_app/widgets/edit_user_dialog.dart';
 
 class UserLibrosDisponiblesPage extends StatefulWidget {
   final bool isAdminHistoric;
@@ -27,18 +28,22 @@ class UserLibrosDisponiblesPage extends StatefulWidget {
       _UserLibrosDisponiblesPageState();
 }
 
-class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
+class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage>
+    with SingleTickerProviderStateMixin {
   Map<String, String>? _userInfo;
   List<dynamic>? _books;
   List<dynamic> _filteredBooks = [];
   bool _isDataLoaded = false;
+  late TabController _tabController;
+  late IconData _selectedIcon = Icons.person;
+  OverlayEntry? _overlayEntry;
+  final GlobalKey _fabKey = GlobalKey();
+  bool _showFloatingActionButton = false;
 
   Future<void> _loadData() async {
-    // Cargar la información del usuario
     _userInfo = await LoadUserInfo();
     final email = _userInfo?['email']!;
 
-    // Cargar los libros según el rol y la condición
     final books = widget.isAdminHistoric
         ? await ApiService.fetchBookPrestados()
         : await ApiService.fetchBooks();
@@ -66,10 +71,29 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
   @override
   void initState() {
     super.initState();
-    _loadData(); // Cargar los datos cuando se inicializa el estado
+    _tabController = TabController(length: 3, vsync: this)
+      ..addListener(() {
+        setState(() {
+          _showFloatingActionButton = _tabController.index == 0 &&
+              !widget.isUserHistoric &&
+              !widget.isAdminHistoric;
+        });
+      });
+    _loadData();
+
+    // Aseguramos que el botón se muestre solo si la pestaña inicial es 0 y no es una pantalla histórica
+    _showFloatingActionButton = _tabController.index == 0 &&
+        !widget.isUserHistoric &&
+        !widget.isAdminHistoric;
   }
 
   @override
+  void dispose() {
+    _tabController.dispose();
+    _overlayEntry?.remove(); // Remove overlay if it's active
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_isDataLoaded) {
@@ -85,41 +109,71 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
     final name = _userInfo!['name']!;
     final phone = _userInfo!['phone']!;
 
-    // Siempre envolver en Scaffold
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
       },
       child: SafeArea(
-        child: Scaffold(
-          body: widget.isUserHistoric || widget.isAdminHistoric
-              ? _buildLibrosTab(context, role, email, name, phone)
-              : DefaultTabController(
-                  length: 3, // Define el número de pestañas
-                  child: Scaffold(
-                    body: TabBarView(
-                      children: [
-                        _buildLibrosTab(context, role, email, name, phone),
-                        _buildPrestamosTab(context),
-                        _buildAgregarLibroTab(context, role, name),
-                        //const Center(child: Text('Perfil')), // Perfil del usuario
-                      ],
+        child: Stack(
+          children: [
+            Scaffold(
+              resizeToAvoidBottomInset: false,
+              body: widget.isUserHistoric || widget.isAdminHistoric
+                  ? _buildLibrosTab(context, role, email, name, phone)
+                  : DefaultTabController(
+                      length: 3,
+                      child: Scaffold(
+                        resizeToAvoidBottomInset: false,
+                        body: TabBarView(
+                          controller: _tabController,
+                          children: [
+                            _buildLibrosTab(context, role, email, name, phone),
+                            _buildPrestamosTab(context),
+                            _buildPerfilTab(context, name, role),
+                          ],
+                        ),
+                        bottomNavigationBar: TabBar(
+                          controller: _tabController,
+                          tabs: const [
+                            Tab(
+                                icon: Icon(Icons.library_books),
+                                text: 'Libros'),
+                            Tab(
+                                icon: Icon(Icons.book),
+                                text: 'Libros Prestados'),
+                            Tab(icon: Icon(Icons.person), text: 'Perfil'),
+                          ],
+                          labelColor: Colors.redAccent,
+                          unselectedLabelColor: Colors.grey,
+                          indicatorColor: Colors.redAccent,
+                        ),
+                      ),
                     ),
-                    bottomNavigationBar: const TabBar(
-                      tabs: [
-                        Tab(icon: Icon(Icons.book), text: 'Libros'),
-                        Tab(icon: Icon(Icons.history), text: 'Prestados'),
-                        Tab(icon: Icon(Icons.add), text: 'Agregar Libro'),
-                        //Tab(icon: Icon(Icons.person), text: 'Perfil'),
-                      ],
-                      labelColor:
-                          Colors.redAccent, // Color de la pestaña seleccionada
-                      unselectedLabelColor:
-                          Colors.grey, // Color de las pestañas no seleccionadas
-                      indicatorColor: Colors.redAccent, // Color del indicador
-                    ),
-                  ),
+            ),
+            if (_showFloatingActionButton)
+              Positioned(
+                bottom: 95.0, // Adjust this value to move the button up or down
+                right:
+                    30.0, // Adjust this value to move the button left or right
+                child: FloatingActionButton(
+                  key: _fabKey,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => RegisterLibroPage(
+                          name: name,
+                          rol: role,
+                          selectedIcon: _selectedIcon,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Icon(Icons.add, color: Colors.white, size: 40.0),
+                  backgroundColor: Colors.redAccent,
                 ),
+              ),
+          ],
         ),
       ),
     );
@@ -130,32 +184,17 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
     return Column(
       children: [
         ItemBannerUser(
-            isPrincipal: widget.isPrincipal,
-            estadoUsuario: role == 'administrador' && !widget.isAdminHistoric,
-            seaching: true,
-            titleBaner: role == 'administrador' && widget.isAdminHistoric
-                ? 'Libros Prestados'
-                : 'Libros Disponibles',
-            rolUser: role,
-            nameUser: name,
-            removerOption: (widget.isAdminHistoric && role == 'administrador')
-                ? true
-                : false,
-            searchCallback: _filterBooks, // Callback de búsqueda
-            options: [
-              Option(
-                icon: const Icon(Icons.exit_to_app),
-                title: 'Cerrar Sesión',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const LoginScreen(),
-                    ),
-                  );
-                },
-              ),
-            ]),
+          viewAdd: false,
+          seaching: true,
+          titleBaner: role == 'administrador' && widget.isAdminHistoric
+              ? 'Libros Prestados'
+              : 'Libros Disponibles',
+          rolUser: role,
+          nameUser: name,
+          viewVolver: false,
+          searchCallback: _filterBooks,
+          selectedIcon: _selectedIcon,
+        ),
         Expanded(
           child: GridView.builder(
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -202,132 +241,188 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage> {
 
   Widget _buildPrestamosTab(BuildContext context) {
     return const UserLibrosDisponiblesPage(
-      isAdminHistoric: true, // Cargar la página de libros prestados
+      isAdminHistoric: true,
     );
   }
 
-  Widget _buildAgregarLibroTab(BuildContext context, String role, String name) {
-    return RegisterLibroPage(
-      name: name,
-      rol: role,
-    );
-  }
-}
+  Widget _buildPerfilTab(
+      BuildContext context, String _userName, String _rolUser) {
+    List<IconData> availableIcons = const [
+      Icons.person,
+      Icons.account_circle,
+      Icons.face,
+      Icons.people,
+      Icons.supervised_user_circle,
+      Icons.group,
+      Icons.business,
+      Icons.work,
+      Icons.person_add,
+      Icons.person_remove,
+      Icons.contact_mail,
+      Icons.contact_phone,
+      Icons.email,
+      Icons.phone,
+      Icons.card_membership,
+      Icons.badge,
+      Icons.security,
+      Icons.lock,
+      Icons.vpn_key,
+      Icons.help,
+      Icons.info,
+    ];
 
-Widget libroCard(
-  BuildContext context,
-  Usuario usuario, {
-  bool isAdminHistoric = false,
-  bool isUserHistoric = false,
-  required String role,
-  required String name,
-  required String cantidad,
-}) {
-  return GestureDetector(
-    onTap: () {
-      if (isAdminHistoric) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => BookDetailHistoryPage(
-              usuario: usuario,
-              role: role,
-              name: name,
-            ),
-          ),
-        );
-      } else if (!isAdminHistoric && role == 'administrador') {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => UpdateLibroPage(
-              name: name,
-              rol: role,
-              cantidadLibro: cantidad,
-              usuario: usuario,
-            ),
-          ),
-        );
-      } else if (isUserHistoric) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => BookDetailPage(
-              usuario: usuario,
-              titleBaner: 'Prestar Libro',
-              role: role,
-              name: name,
-              cantButton: 1,
-            ),
-          ),
-        );
-      }
-    },
-    child: LayoutBuilder(
-      builder: (context, constraints) {
-        // Use constraints to calculate responsive sizes based on the available width
-        final double cardWidth = constraints.maxWidth;
-        final double imageSize =
-            cardWidth * 0.6; // Adjust image size based on card width
-
-        return Container(
-          margin: const EdgeInsets.all(12.0),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12.0),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                spreadRadius: 2,
-                blurRadius: 6,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(
-                8.0), // Use smaller padding to avoid overflow
+    return Scaffold(
+      body: Column(
+        children: [
+          Expanded(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                ImageWidget(
-                  imageUrl: usuario.imageUrl,
-                  height:
-                      imageSize, // Set image height relative to the card width
-                  width:
-                      imageSize, // Set image width relative to the card width
+                ItemBannerUser(
+                  viewAdd: false,
+                  seaching: false,
+                  nameUser: _userName,
+                  titleBaner: "Editar Perfil",
+                  rolUser: _rolUser,
+                  selectedIcon: _selectedIcon,
+                  viewVolver: false,
+                  viewLogout: true,
                 ),
-                const SizedBox(height: 4.0),
-                Text(
-                  usuario.title,
-                  style: TextStyle(
-                    fontSize: cardWidth *
-                        0.08, // Adjust font size based on card width
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                Expanded(
+                  child: UserEditWidget(
+                    availableIcons: availableIcons,
+                    initialName: _userName,
+                    selectedIcon: Icons.person,
+                    onSave: (IconData icon, String name) {
+                      setState(() {
+                        _userName = name;
+                        _selectedIcon = icon;
+                        _tabController.index = 0;
+                      });
+                    },
+                    onCancel: () {
+                      setState(() {
+                        _tabController.index = 0;
+                      });
+                    },
                   ),
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                ),
-                const SizedBox(height: 1.0),
-                Text(
-                  usuario.author,
-                  style: TextStyle(
-                    fontSize: cardWidth *
-                        0.06, // Adjust font size based on card width
-                    color: Colors.grey[600],
-                  ),
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
                 ),
               ],
             ),
           ),
-        );
+        ],
+      ),
+    );
+  }
+
+  Widget libroCard(
+    BuildContext context,
+    Usuario usuario, {
+    bool isAdminHistoric = false,
+    bool isUserHistoric = false,
+    required String role,
+    required String name,
+    required String cantidad,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        if (isAdminHistoric) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BookDetailHistoryPage(
+                usuario: usuario,
+                role: role,
+                name: name,
+              ),
+            ),
+          );
+        } else if (!isAdminHistoric && role == 'administrador') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => UpdateLibroPage(
+                name: name,
+                rol: role,
+                cantidadLibro: cantidad,
+                usuario: usuario,
+                selectedIcon: _selectedIcon,
+              ),
+            ),
+          );
+        } else if (isUserHistoric) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BookDetailPage(
+                usuario: usuario,
+                titleBaner: 'Prestar Libro',
+                role: role,
+                name: name,
+                cantButton: 1,
+              ),
+            ),
+          );
+        }
       },
-    ),
-  );
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final double cardWidth = constraints.maxWidth;
+          final double imageSize = cardWidth * 0.6;
+
+          return Container(
+            margin: const EdgeInsets.all(12.0),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12.0),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  spreadRadius: 2,
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  ImageWidget(
+                    imageUrl: usuario.imageUrl,
+                    height: imageSize,
+                    width: imageSize,
+                  ),
+                  const SizedBox(height: 4.0),
+                  Text(
+                    usuario.title,
+                    style: TextStyle(
+                      fontSize: cardWidth * 0.08,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                  const SizedBox(height: 1.0),
+                  Text(
+                    usuario.author,
+                    style: TextStyle(
+                      fontSize: cardWidth * 0.06,
+                      color: Colors.grey[600],
+                    ),
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 }

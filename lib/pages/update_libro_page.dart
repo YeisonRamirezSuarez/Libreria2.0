@@ -12,6 +12,7 @@ class UpdateLibroPage extends StatefulWidget {
   final String rol;
   final String cantidadLibro;
   final Usuario usuario;
+  final IconData selectedIcon;
 
   const UpdateLibroPage({
     super.key,
@@ -19,6 +20,7 @@ class UpdateLibroPage extends StatefulWidget {
     required this.rol,
     required this.cantidadLibro,
     required this.usuario,
+    required this.selectedIcon,
   });
 
   @override
@@ -85,7 +87,7 @@ class _UpdateLibroPageState extends State<UpdateLibroPage> {
           context,
           MaterialPageRoute(
               builder: (context) => const UserLibrosDisponiblesPage(
-                    isPrincipal: true,
+                 isPrincipal: false,
                   )),
         );
       } else {
@@ -114,13 +116,15 @@ class _UpdateLibroPageState extends State<UpdateLibroPage> {
               child: Column(
                 children: [
                   ItemBannerUser(
-                    estadoUsuario: false,
                     seaching: false,
                     titleBaner: "Actualizar libro",
                     rolUser: widget.rol,
                     nameUser: widget.name,
                     deleteBook: true,
                     idLibro: widget.usuario.idBook,
+                    selectedIcon: widget.selectedIcon,
+                    viewAdd: false,
+                    viewVolver: true,
                   ),
                   SizedBox(height: MediaQuery.of(context).size.height * 0.01),
                   FormLibro(

@@ -24,11 +24,12 @@ class BookDetailHistoryPage extends StatelessWidget {
         body: Column(
           children: [
             ItemBannerUser(
-              estadoUsuario: false,
               seaching: false,
               titleBaner: "Mi Libro",
               rolUser: role,
               nameUser: name,
+              viewAdd: false,
+              viewVolver: true,
             ),
             Expanded(
               child: SingleChildScrollView(

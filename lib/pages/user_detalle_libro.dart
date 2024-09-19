@@ -43,11 +43,12 @@ class BookDetailPage extends StatelessWidget {
             return Column(
               children: [
                 ItemBannerUser(
-                  estadoUsuario: false,
                   seaching: false,
                   titleBaner: titleBaner,
                   rolUser: role,
                   nameUser: name,
+                  viewAdd: false,
+                  viewVolver: true,
                 ),
                 Expanded(
                   child: SingleChildScrollView(

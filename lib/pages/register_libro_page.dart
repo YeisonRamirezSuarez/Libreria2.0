@@ -8,8 +8,9 @@ import 'package:libreria_app/widgets/custom_widgets.dart';
 class RegisterLibroPage extends StatefulWidget {
   final String name;
   final String rol;
+  final IconData selectedIcon;
 
-  const RegisterLibroPage({super.key, required this.name, required this.rol});
+  const RegisterLibroPage({super.key, required this.name, required this.rol, required this.selectedIcon});
 
   @override
   _RegisterLibroPageState createState() => _RegisterLibroPageState();
@@ -64,7 +65,7 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
           context,
           MaterialPageRoute(
               builder: (context) => const UserLibrosDisponiblesPage(
-                    isPrincipal: true,
+                isPrincipal: false,
                   )),
         );
       } else {
@@ -93,12 +94,13 @@ class _RegisterLibroPageState extends State<RegisterLibroPage> {
               child: Column(
                 children: [
                   ItemBannerUser(
-                    estadoUsuario: false,
                     seaching: false,
                     titleBaner: "Agregar libro",
                     rolUser: widget.rol,
                     nameUser: widget.name,
-                    removerBanner: true,
+                    selectedIcon: widget.selectedIcon,
+                    viewAdd: false,
+                    viewVolver: true,
                   ),
                   FormLibro(
                     formKey: _formKey,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart'; // Asegúrate de importar Cupertino
 import 'package:http/http.dart' as http;
 import 'package:libreria_app/models/api_response.dart';
 import 'package:libreria_app/pages/login_page.dart';
@@ -7,8 +8,7 @@ import 'package:libreria_app/services/api_services.dart';
 import 'package:libreria_app/services/dialog_service.dart';
 
 class ItemBannerUser extends StatefulWidget {
-  final bool isPrincipal;
-  final bool estadoUsuario; // Estado del usuario
+  final bool viewAdd; // Estado del usuario
   final bool seaching;
   final bool deleteBook;
   final String titleBaner;
@@ -17,14 +17,14 @@ class ItemBannerUser extends StatefulWidget {
   final List<Option> options; // Lista de opciones
   final String idLibro;
   final Function(String)? searchCallback; // Callback para la búsqueda
-  final List<IconData> availableIcons; // Lista de íconos disponibles
   final bool removerBanner;
-  final bool removerOption;
+  final bool viewVolver;
+  final bool viewLogout;
+  IconData selectedIcon;
 
   ItemBannerUser({
     super.key,
-    this.isPrincipal = false,
-    required this.estadoUsuario,
+    this.viewAdd = false,
     this.seaching = false,
     this.deleteBook = false,
     this.titleBaner = 'Titulo del Banner',
@@ -33,31 +33,10 @@ class ItemBannerUser extends StatefulWidget {
     this.options = const [],
     this.idLibro = '0',
     this.searchCallback,
-    this.availableIcons = const [
-      Icons.person,
-      Icons.account_circle,
-      Icons.face,
-      Icons.people,
-      Icons.supervised_user_circle,
-      Icons.group,
-      Icons.business,
-      Icons.work,
-      Icons.person_add,
-      Icons.person_remove,
-      Icons.contact_mail,
-      Icons.contact_phone,
-      Icons.email,
-      Icons.phone,
-      Icons.card_membership,
-      Icons.badge,
-      Icons.security,
-      Icons.lock,
-      Icons.vpn_key,
-      Icons.help,
-      Icons.info,
-    ],
     this.removerBanner = false,
-    this.removerOption = false,
+    this.viewVolver = false,
+    this.selectedIcon = Icons.person,
+    this.viewLogout = false,
   });
 
   @override
@@ -68,14 +47,14 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
   late FocusNode _searchFocusNode;
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
-  IconData _selectedIcon = Icons.person; // Estado del ícono seleccionado
+  OverlayEntry? _overlayEntry;
+  final GlobalKey _iconKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
     _searchFocusNode = FocusNode();
     _nameController.text = widget.nameUser;
-    _selectedIcon = Icons.person; // Establece un ícono predeterminado
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       FocusScope.of(context).unfocus();
@@ -94,6 +73,7 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
     _searchFocusNode.dispose();
     _searchController.dispose();
     _nameController.dispose();
+    _overlayEntry?.remove();
     super.dispose();
   }
 
@@ -119,281 +99,219 @@ class _ItemBannerUserState extends State<ItemBannerUser> {
     }
   }
 
-  void _showEditDialog() {
-    IconData tempSelectedIcon = _selectedIcon;
-    TextEditingController tempNameController =
-        TextEditingController(text: _nameController.text);
+  void _showOverlay() {
+    if (_overlayEntry != null) {
+      _overlayEntry!.remove();
+      _overlayEntry = null;
+    } else {
+      final RenderBox renderBox =
+          _iconKey.currentContext!.findRenderObject() as RenderBox;
+      final Offset offset = renderBox.localToGlobal(Offset.zero);
 
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return AlertDialog(
-              title: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Editar Usuario'),
-                  // Icono de cerrar sesión
-                  IconButton(
-                    icon: const Icon(Icons.logout, color: Colors.redAccent),
-                    onPressed: () {
-                      // Aquí puedes agregar la lógica para cerrar sesión
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const LoginScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ],
+      _overlayEntry = OverlayEntry(
+        builder: (context) => Stack(
+          children: [
+            // Fondo oscuro que cubre el resto de la pantalla
+            GestureDetector(
+              onTap: () {
+                _overlayEntry?.remove(); // Cierra el menú emergente
+                _overlayEntry = null;
+              },
+              child: Container(
+                color: Colors.black54, // Color de fondo semitransparente
+                width: MediaQuery.of(context).size.width,
+                height: MediaQuery.of(context).size.height,
               ),
-              content: SizedBox(
-                width: double
-                    .maxFinite, // Asegura que el contenido use el máximo ancho posible
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Selector de ícono
-                    const Text('Selecciona un ícono:'),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      height: 150.0, // Ajusta la altura según sea necesario
-                      child: GridView.builder(
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 4, // Número de íconos por fila
-                          crossAxisSpacing:
-                              10.0, // Espacio horizontal entre íconos
-                          mainAxisSpacing:
-                              10.0, // Espacio vertical entre íconos
-                        ),
-                        itemCount: widget.availableIcons.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          IconData icon = widget.availableIcons[index];
-                          bool isSelected = tempSelectedIcon == icon;
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                tempSelectedIcon =
-                                    icon; // Actualiza el ícono seleccionado temporal
-                              });
-                            },
-                            child: Icon(
-                              icon,
-                              color:
-                                  isSelected ? Colors.redAccent : Colors.white,
-                              size: 40.0,
-                            ),
-                          );
-                        },
-                      ),
+            ),
+            // Menú emergente
+            Positioned(
+              left: offset.dx -
+                  140, // Ajusta esta posición para que el menú esté a la izquierda del ícono
+              top: offset.dy,
+              width: 200,
+              child: Material(
+                color: Colors.transparent,
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(10.0),
+                      bottomLeft:
+                          Radius.circular(10.0)), // Ajusta el radio del círculo
+                  child: Container(
+                    color: Colors.redAccent,
+                    width: 180, // Ajusta el ancho del menú
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: widget.options.map((option) {
+                        return ListTile(
+                          leading: option.icon,
+                          iconColor: Colors.white,
+                          title: Text(option.title,
+                              style: const TextStyle(color: Colors.white)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                        );
+                      }).toList(),
                     ),
-                    const SizedBox(height: 20),
-                    // Campo de texto para nombre
-                    TextField(
-                      controller: tempNameController,
-                      decoration: const InputDecoration(labelText: 'Nombre'),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _selectedIcon =
-                          tempSelectedIcon; // Guarda el ícono seleccionado en el estado del widget
-                      widget.nameUser = tempNameController
-                          .text; // Guarda el nombre en el estado del widget
-                    });
-                    Navigator.pop(context);
-                  },
-                  child: const Text(
-                    'Guardar',
-                    style: TextStyle(color: Colors.redAccent),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text(
-                    'Cancelar',
-                    style: TextStyle(color: Colors.redAccent),
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
+            ),
+          ],
+        ),
+      );
+
+      Overlay.of(context)!.insert(_overlayEntry!);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return FocusScope(
       node: FocusScopeNode(),
-      child: Container(
-        width: double.infinity,
-        color: Colors.black,
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            if (!widget.removerBanner)
-              Container(
-                color: Colors.black,
-                child: Row(
-                  children: <Widget>[
-                    GestureDetector(
-                      onTap: (widget.isPrincipal) ? _showEditDialog : null,
-                      child: CircleAvatar(
+      child: SingleChildScrollView(
+        child: Container(
+          width: double.infinity,
+          color: Colors.black,
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              if (!widget.removerBanner)
+                Container(
+                  color: Colors.black,
+                  child: Row(
+                    children: <Widget>[
+                      CircleAvatar(
                         radius: 30.0,
                         backgroundColor: Colors.grey[200],
                         child: Icon(
-                          _selectedIcon, // Mostrar ícono seleccionado
+                          widget.selectedIcon,
                           size: 30,
                           color: Colors.black,
                         ),
                       ),
+                      const SizedBox(width: 20.0),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              widget.rolUser,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18.0,
+                              ),
+                            ),
+                            Text(
+                              widget.nameUser,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 15.0,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (widget.viewAdd)
+                        GestureDetector(
+                          key: _iconKey,
+                          onTap: () => _showOverlay(),
+                          child: const Icon(
+                            Icons.add,
+                            size: 50.0,
+                            color: Colors.redAccent,
+                          ),
+                        )
+                      else if (widget.viewVolver)
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back),
+                          iconSize: 50.0,
+                          color: Colors.redAccent,
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          tooltip: 'Volver',
+                        )
+                      else if (widget.viewLogout)
+                        IconButton(
+                          icon: const Icon(Icons.logout,
+                              color: Colors.redAccent, size: 50),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const LoginScreen()),
+                            );
+                          },
+                          tooltip: 'Cerrar Sesión',
+
+                        )
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 10.0),
+              Visibility(
+                visible: widget.seaching,
+                child: TextField(
+                  focusNode: _searchFocusNode,
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Buscar por nombre o autor',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: GestureDetector(
+                      onTap: () {
+                        _searchController.clear();
+                        _searchFocusNode.unfocus();
+                      },
+                      child: const Icon(Icons.close),
                     ),
-                    const SizedBox(width: 20.0),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10.0),
+                child: Row(
+                  children: [
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            widget.rolUser,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18.0,
-                            ),
-                          ),
-                          Text(
-                            widget.nameUser,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 15.0,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        widget.titleBaner,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 30.0,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.left,
                       ),
                     ),
-                    if (widget.estadoUsuario)
+                    if (widget.deleteBook)
                       IconButton(
-                        icon: const Icon(Icons.add),
-                        iconSize: 50.0,
-                        color: Colors.redAccent,
+                        icon: const Icon(
+                          Icons.delete_rounded,
+                          color: Colors.redAccent,
+                          size: 50,
+                        ),
                         onPressed: () {
-                          showModalBottomSheet(
-                            backgroundColor: Colors.redAccent,
-                            context: context,
-                            builder: (BuildContext context) {
-                              return Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: widget.options.map((option) {
-                                    return ListTile(
-                                      leading: option.icon,
-                                      iconColor: Colors.white,
-                                      title: Text(
-                                        option.title,
-                                        style: const TextStyle(
-                                            color: Colors.white),
-                                      ),
-                                      onTap: () {
-                                        Navigator.pop(
-                                            context); // Cierra el modal
-                                        option
-                                            .onTap(); // Ejecuta la función onTap
-                                      },
-                                    );
-                                  }).toList(),
-                                ),
-                              );
-                            },
-                          );
+                          _deleteLibro();
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const UserLibrosDisponiblesPage(
+                                        isPrincipal: true,
+                                      )));
                         },
-                        tooltip: 'Funciones de usuario',
-                      )
-                    else if (!widget.removerOption)
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back),
-                        iconSize: 50.0,
-                        color: Colors.redAccent,
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        tooltip: 'Volver',
                       ),
                   ],
                 ),
               ),
-            const SizedBox(height: 10.0),
-            Visibility(
-              visible: widget.seaching,
-              child: TextField(
-                focusNode: _searchFocusNode,
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Buscar por nombre o autor',
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: GestureDetector(
-                    onTap: () {
-                      _searchController.clear();
-                      _searchFocusNode.unfocus();
-                    },
-                    child: const Icon(Icons.close),
-                  ),
-                ),
+              Container(
+                height: 3.0,
+                color: Colors.redAccent,
+                width: double.infinity,
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      widget.titleBaner,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 30.0,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.left,
-                    ),
-                  ),
-                  if (widget.deleteBook)
-                    IconButton(
-                      icon: const Icon(
-                        Icons.delete_rounded,
-                        color: Colors.redAccent,
-                        size: 50,
-                      ),
-                      onPressed: () {
-                        _deleteLibro();
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    const UserLibrosDisponiblesPage(
-                                      isPrincipal: true,
-                                    )));
-                      },
-                    ),
-                ],
-              ),
-            ),
-            Container(
-              height: 3.0,
-              color: Colors.redAccent,
-              width: double.infinity,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
