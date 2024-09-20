@@ -105,12 +105,7 @@ class UpdateLibroPageState extends State<UpdateLibroPage> {
       context,
       'Libro actualizado exitosamente',
     );
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>  UserLibrosDisponiblesPage(isPrincipal: false),
-      ),
-    );
+    Navigator.pop(context);
   }
 
   void _showErrorDialog(String message) {

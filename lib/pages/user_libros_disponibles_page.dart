@@ -5,6 +5,9 @@ import 'package:libreria_app/services/shared_preferences.dart';
 import 'package:libreria_app/widgets/libros_tab.dart';
 import 'package:libreria_app/widgets/perfil_tab.dart';
 import 'package:libreria_app/widgets/prestamos_tab.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/status.dart' as status;
+import 'dart:convert'; // Para manejar JSON
 
 class UserLibrosDisponiblesPage extends StatefulWidget {
   final bool isAdminHistoric;
@@ -35,23 +38,52 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage>
   final GlobalKey _fabKey = GlobalKey();
   bool _showFloatingActionButton = false;
   final ApiService _apiService = ApiService(); // Crear una instancia de ApiService
+  late WebSocketChannel _channel; // Agregar WebSocketChannel
 
-
+  // Método para cargar los datos desde la API
   Future<void> _loadData() async {
     _userInfo = await LoadUserInfo();
-    final email = _userInfo?['email']!;
+    final email = _userInfo?['email'];
 
     final books = widget.isAdminHistoric
         ? await _apiService.fetchBookPrestados()
         : await _apiService.fetchBooks();
 
-    setState(() {
-      _books = books;
-      _filteredBooks = books;
-      _isDataLoaded = true;
+    // Verificar si el widget está montado antes de llamar a setState
+    if (mounted) {
+      setState(() {
+        _books = books;
+        _filteredBooks = books;
+        _isDataLoaded = true;
+      });
+    }
+  }
+
+  // Método para conectar el WebSocket
+  void _connectToWebSocket() {
+    _channel = WebSocketChannel.connect(
+      Uri.parse('ws://192.168.1.201:2026'), // Cambia la URL según sea necesario
+    );
+
+    _channel.stream.listen((message) {
+      print('Mensaje recibido: $message');
+      // Manejar el mensaje recibido
+      final data = jsonDecode(message);
+      if (data['tipo'] == 'actualizacion') {
+        // Realiza la consulta a la API nuevamente si hay una actualización
+        _loadData();
+        print(data['mensaje']); // Opcional: imprimir el mensaje
+      }
+    }, onError: (error) {
+      print('Error en WebSocket: $error');
+    }, onDone: () {
+      print('Conexión cerrada del WebSocket');
+      // Reconectar si la conexión se cierra
+      _connectToWebSocket();
     });
   }
 
+  // Método para filtrar libros
   void _filterBooks(String query) {
     setState(() {
       final searchQuery = query.toLowerCase();
@@ -76,7 +108,8 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage>
               !widget.isAdminHistoric;
         });
       });
-    _loadData();
+    _loadData(); // Cargar datos de la API
+    _connectToWebSocket(); // Conectar al WebSocket
     _showFloatingActionButton = _tabController.index == 0 &&
         !widget.isUserHistoric &&
         !widget.isAdminHistoric;
@@ -85,20 +118,24 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage>
   @override
   void dispose() {
     _tabController.dispose();
+    _channel.sink.close(); // Cerrar el WebSocket al salir
     _overlayEntry?.remove();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    // Mostrar un indicador de carga mientras se cargan los datos
     if (!_isDataLoaded) {
       return const Center(child: CircularProgressIndicator());
     }
 
+    // Si no se encontró información del usuario
     if (_userInfo == null) {
-      return const Center(child: Text('No data found'));
+      return const Center(child: Text('No se encontraron datos'));
     }
 
+    // Obtener datos del usuario
     final role = _userInfo!['role']!;
     final email = _userInfo!['email']!;
     final name = _userInfo!['name']!;
@@ -158,12 +195,8 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage>
                         bottomNavigationBar: TabBar(
                           controller: _tabController,
                           tabs: const [
-                            Tab(
-                                icon: Icon(Icons.library_books),
-                                text: 'Libros'),
-                            Tab(
-                                icon: Icon(Icons.book),
-                                text: 'Libros Prestados'),
+                            Tab(icon: Icon(Icons.library_books), text: 'Libros'),
+                            Tab(icon: Icon(Icons.book), text: 'Libros Prestados'),
                             Tab(icon: Icon(Icons.person), text: 'Perfil'),
                           ],
                           labelColor: Colors.redAccent,
@@ -173,6 +206,7 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage>
                       ),
                     ),
             ),
+            // Botón flotante para agregar un libro
             if (_showFloatingActionButton)
               Positioned(
                 bottom: 95.0,

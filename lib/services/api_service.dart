@@ -263,7 +263,7 @@ class ApiService {
   }
 
   Future<List<UsuarioPrestado>> fetchUsuariosConLibrosPrestados(String idBook) async {
-    final url = Uri.parse('${ApiEndpoints.fetchPrestados}?id=$idBook');
+    final url = Uri.parse('${ApiEndpoints.fetchPrestados}&id=$idBook');
 
     try {
       final response = await http.get(url);

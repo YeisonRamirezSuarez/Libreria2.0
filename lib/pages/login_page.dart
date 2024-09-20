@@ -22,6 +22,7 @@ class LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   final ApiService _apiService = ApiService();
   AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
+  bool _isLoading = false;  // Nueva bandera para controlar el estado de carga
 
   @override
   void initState() {
@@ -51,6 +52,10 @@ class LoginPageState extends State<LoginPage> {
       return;
     }
 
+    setState(() {
+      _isLoading = true;  // Activar la pantalla de carga
+    });
+
     final email = _emailController.text;
     final password = _passwordController.text;
 
@@ -75,6 +80,12 @@ class LoginPageState extends State<LoginPage> {
     } catch (e) {
       if (!mounted) return;
       _showInfoDialog('Se ha producido un error inesperado: ${e.toString()}');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;  // Desactivar la pantalla de carga
+        });
+      }
     }
   }
 
@@ -101,29 +112,36 @@ class LoginPageState extends State<LoginPage> {
     return KeyboardDismiss(
       child: SafeArea(
         child: Scaffold(
-          body: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: EdgeInsets.all(screenWidth * 0.05),
-              child: Form(
-                key: _formKey,
-                autovalidateMode: _autoValidateMode,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildHeader(),
-                    SizedBox(height: screenHeight * 0.1),
-                    _buildEmailField(),
-                    SizedBox(height: screenHeight * 0.02),
-                    _buildPasswordField(),
-                    SizedBox(height: screenHeight * 0.05),
-                    _buildLoginButton(),
-                    SizedBox(height: screenHeight * 0.05),
-                    _buildFooter(screenWidth),
-                  ],
+          body: Stack(
+            children: [
+              SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Padding(
+                  padding: EdgeInsets.all(screenWidth * 0.05),
+                  child: Form(
+                    key: _formKey,
+                    autovalidateMode: _autoValidateMode,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildHeader(),
+                        SizedBox(height: screenHeight * 0.1),
+                        _buildEmailField(),
+                        SizedBox(height: screenHeight * 0.02),
+                        _buildPasswordField(),
+                        SizedBox(height: screenHeight * 0.05),
+                        _buildLoginButton(),
+                        SizedBox(height: screenHeight * 0.05),
+                        _buildFooter(screenWidth),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            ),
+              // Mostrar la pantalla de carga cuando _isLoading es true
+              if (_isLoading)
+                _buildLoadingOverlay(),
+            ],
           ),
         ),
       ),
@@ -167,6 +185,7 @@ class LoginPageState extends State<LoginPage> {
               _formKey.currentState?.validate() == true)
           ? _login
           : null,
+      enabled: !_isLoading,  // Deshabilitar el botón si está cargando
     );
   }
 
@@ -196,4 +215,29 @@ class LoginPageState extends State<LoginPage> {
       ],
     );
   }
+
+  // Widget para el overlay de carga con el contador
+Widget _buildLoadingOverlay() {
+  return Positioned.fill(
+    child: Stack(
+      children: [
+        ModalBarrier(
+          dismissible: false,
+          color: Colors.black.withOpacity(0.5),
+        ),
+        Center(
+          child: SizedBox(
+            width: 100,  // Ancho del CircularProgressIndicator
+            height: 100, // Altura del CircularProgressIndicator
+            child: CircularProgressIndicator(
+              color: Colors.redAccent,
+              strokeWidth: 8,  // Ajusta el grosor del borde
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 }

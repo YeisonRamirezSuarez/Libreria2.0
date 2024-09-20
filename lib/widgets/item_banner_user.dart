@@ -83,12 +83,7 @@ class ItemBannerUserState extends State<ItemBannerUser> {
         if (response.success) {
           SnackBarService.showSuccessSnackBar(
               context, 'Libro eliminado exitosamente');
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-                builder: (context) =>
-                    UserLibrosDisponiblesPage(isPrincipal: true)),
-          );
+          Navigator.pop(context);
         } else {
           SnackBarService.showErrorSnackBar(
               context, response.error ?? 'Error desconocido');
@@ -151,8 +146,7 @@ class ItemBannerUserState extends State<ItemBannerUser> {
                   onBackTap: () => Navigator.pop(context),
                   onLogoutTap: () => Navigator.push(
                     context,
-                    MaterialPageRoute(
-                        builder: (context) => const LoginPage()),
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
                   ),
                 ),
               const SizedBox(height: 10.0),
@@ -191,13 +185,14 @@ class ItemBannerUserState extends State<ItemBannerUser> {
                         ),
                         onPressed: () {
                           _deleteLibro();
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      UserLibrosDisponiblesPage(
-                                        isPrincipal: true,
-                                      )));
+                          // Navigator.push(
+                          //     context,
+                          //     MaterialPageRoute(
+                          //         builder: (context) =>
+                          //             UserLibrosDisponiblesPage(
+                          //               isPrincipal: true,
+                          //             )));
+                          // Navigator.pop(context);
                         },
                       ),
                   ],

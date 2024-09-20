@@ -6,13 +6,12 @@ import 'package:libreria_app/services/snack_bar_service.dart';
 import 'package:libreria_app/widgets/custom_widgets.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class BookDetailPage extends StatelessWidget {
+class BookDetailPage extends StatefulWidget {
   final Usuario usuario;
   final String role;
   final String name;
   final String titleBaner;
   final int cantButton;
-  final ApiService _apiService = ApiService();
 
   BookDetailPage({
     super.key,
@@ -23,11 +22,17 @@ class BookDetailPage extends StatelessWidget {
     required this.cantButton,
   });
 
+  @override
+  _BookDetailPageState createState() => _BookDetailPageState();
+}
+
+class _BookDetailPageState extends State<BookDetailPage> {
+  final ApiService _apiService = ApiService();
+  bool _isLoading = false; // Bandera para controlar la pantalla de carga
+
   Future<void> _launchURL(BuildContext context, String url) async {
-    //verificar si es una url mostrar alerta
     if (!url.startsWith('http') && !url.startsWith('https')) {
-      SnackBarService.showErrorSnackBar(
-          context, "No se pudo abrir la URL: $url");
+      SnackBarService.showErrorSnackBar(context, "No se pudo abrir la URL: $url");
       return;
     }
 
@@ -36,15 +41,76 @@ class BookDetailPage extends StatelessWidget {
     }
   }
 
+  Future<void> _handleReturn() async {
+    setState(() {
+      _isLoading = true; // Activar la pantalla de carga
+    });
+    try {
+      final response = await _apiService.deleteLibroPrestado(widget.usuario);
+      if (response.success) {
+        SnackBarService.showSuccessSnackBar(context, 'Libro devuelto exitosamente');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const UserPrestadoPage(isPrincipal: true),
+          ),
+        );
+      } else {
+        SnackBarService.showErrorSnackBar(context, response.error ?? 'Error desconocido');
+      }
+    } catch (error) {
+      SnackBarService.showErrorSnackBar(context, 'Error de red: $error');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false; // Desactivar la pantalla de carga
+        });
+      }
+    }
+  }
+
+  Future<void> _handleLend() async {
+    setState(() {
+      _isLoading = true; // Activar la pantalla de carga
+    });
+    try {
+      final response = await _apiService.prestarLibro(widget.usuario);
+      if (response.success) {
+        SnackBarService.showSuccessSnackBar(context, 'Libro prestado exitosamente');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const UserPrestadoPage(isPrincipal: true),
+          ),
+        );
+      } else {
+        SnackBarService.showErrorSnackBar(context, response.error ?? 'Error desconocido');
+      }
+    } catch (error) {
+      SnackBarService.showErrorSnackBar(context, 'Error de red: $error');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false; // Desactivar la pantalla de carga
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.black,
-        body: LayoutBuilder(
-          builder: (context, constraints) {
-            return _buildContent(context, constraints);
-          },
+        body: Stack(
+          children: [
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return _buildContent(context, constraints);
+              },
+            ),
+            if (_isLoading) _buildLoadingOverlay(), // Mostrar overlay de carga
+          ],
         ),
       ),
     );
@@ -74,7 +140,7 @@ class BookDetailPage extends StatelessWidget {
                   _buildAuthor(textSizeDetail),
                   SizedBox(height: constraints.maxWidth * 0.01),
                   _buildDescription(textSizeDetail),
-                  if (usuario.date.isNotEmpty) ...[
+                  if (widget.usuario.date.isNotEmpty) ...[
                     SizedBox(height: constraints.maxWidth * 0.02),
                     _buildDate(textSizeDetail),
                   ],
@@ -94,9 +160,9 @@ class BookDetailPage extends StatelessWidget {
   Widget _buildHeader() {
     return ItemBannerUser(
       seaching: false,
-      titleBaner: titleBaner,
-      rolUser: role,
-      nameUser: name,
+      titleBaner: widget.titleBaner,
+      rolUser: widget.role,
+      nameUser: widget.name,
       viewAdd: false,
       viewVolver: true,
     );
@@ -104,7 +170,7 @@ class BookDetailPage extends StatelessWidget {
 
   Widget _buildImage(double size) {
     return ImageWidget(
-      imageUrl: usuario.imageUrl,
+      imageUrl: widget.usuario.imageUrl,
       height: size,
       width: size,
     );
@@ -112,7 +178,7 @@ class BookDetailPage extends StatelessWidget {
 
   Widget _buildTitle(double textSize) {
     return Text(
-      usuario.title,
+      widget.usuario.title,
       style: TextStyle(
         color: Colors.white,
         fontSize: textSize,
@@ -123,7 +189,7 @@ class BookDetailPage extends StatelessWidget {
 
   Widget _buildAuthor(double textSize) {
     return Text(
-      usuario.author,
+      widget.usuario.author,
       style: TextStyle(
         color: Colors.grey[400],
         fontSize: textSize,
@@ -134,7 +200,7 @@ class BookDetailPage extends StatelessWidget {
 
   Widget _buildDescription(double textSize) {
     return Text(
-      usuario.description,
+      widget.usuario.description,
       style: TextStyle(
         color: Colors.grey[600],
         fontSize: textSize,
@@ -145,7 +211,7 @@ class BookDetailPage extends StatelessWidget {
 
   Widget _buildDate(double textSize) {
     return Text(
-      'Fecha: ${usuario.date}',
+      'Fecha: ${widget.usuario.date}',
       style: TextStyle(
         color: Colors.white70,
         fontSize: textSize * 0.8,
@@ -155,7 +221,7 @@ class BookDetailPage extends StatelessWidget {
   }
 
   Widget _buildButtons(BuildContext context, double buttonSize) {
-    if (cantButton == 2) {
+    if (widget.cantButton == 2) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
@@ -163,7 +229,7 @@ class BookDetailPage extends StatelessWidget {
           _buildViewButton(context, buttonSize),
         ],
       );
-    } else if (cantButton == 1) {
+    } else if (widget.cantButton == 1) {
       return _buildLendButton(context, buttonSize);
     } else {
       return _buildInvalidButtonCount();
@@ -176,28 +242,7 @@ class BookDetailPage extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
         child: CustomButton(
           text: 'Devolver',
-          onPressed: () async {
-            try {
-              final response = await _apiService.deleteLibroPrestado(usuario);
-              if (response.success) {
-                SnackBarService.showSuccessSnackBar(
-                    context, 'Libro devuelto exitosamente');
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        const UserPrestadoPage(isPrincipal: true),
-                  ),
-                );
-              } else {
-                SnackBarService.showErrorSnackBar(
-                    context, response.error ?? 'Error desconocido');
-              }
-            } catch (error) {
-              SnackBarService.showErrorSnackBar(
-                  context, 'Error de red: $error');
-            }
-          },
+          onPressed: _isLoading ? null : _handleReturn, // Deshabilitar si está cargando
           dimensioneBoton: buttonSize,
           colorFondo: Colors.redAccent,
         ),
@@ -205,15 +250,13 @@ class BookDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildViewButton(context, double buttonSize) {
+  Widget _buildViewButton(BuildContext context, double buttonSize) {
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
         child: CustomButton(
           text: 'Ver',
-          onPressed: () {
-            _launchURL(context, usuario.bookUrl);
-          },
+          onPressed: _isLoading ? null : () => _launchURL(context, widget.usuario.bookUrl), // Deshabilitar si está cargando
           dimensioneBoton: buttonSize,
           colorFondo: Colors.redAccent,
         ),
@@ -226,27 +269,7 @@ class BookDetailPage extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: CustomButton(
         text: 'Prestar',
-        onPressed: () async {
-          try {
-            final response = await _apiService.prestarLibro(usuario);
-            if (response.success) {
-              SnackBarService.showSuccessSnackBar(
-                  context, 'Libro prestado exitosamente');
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      const UserPrestadoPage(isPrincipal: true),
-                ),
-              );
-            } else {
-              SnackBarService.showErrorSnackBar(
-                  context, response.error ?? 'Error desconocido');
-            }
-          } catch (error) {
-            SnackBarService.showErrorSnackBar(context, 'Error de red: $error');
-          }
-        },
+        onPressed: _isLoading ? null : _handleLend, // Deshabilitar si está cargando
         dimensioneBoton: buttonSize,
         colorFondo: Colors.redAccent,
       ),
@@ -262,4 +285,28 @@ class BookDetailPage extends StatelessWidget {
       ),
     );
   }
+
+  // Widget para el overlay de carga
+  Widget _buildLoadingOverlay() {
+  return Positioned.fill(
+    child: Stack(
+      children: [
+        ModalBarrier(
+          dismissible: false,
+          color: Colors.black.withOpacity(0.5),
+        ),
+        Center(
+          child: SizedBox(
+            width: 100,  // Ancho del CircularProgressIndicator
+            height: 100, // Altura del CircularProgressIndicator
+            child: CircularProgressIndicator(
+              color: Colors.redAccent,
+              strokeWidth: 8,  // Ajusta el grosor del borde
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
 }

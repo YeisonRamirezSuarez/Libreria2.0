@@ -24,7 +24,7 @@ class RegisterUserPageState extends State<RegisterUserPage> {
   final _passwordController = TextEditingController();
   AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
   final ApiService _apiService = ApiService(); // Crear una instancia de ApiService
-
+  bool _isLoading = false; // Nueva bandera para controlar el estado de carga
 
   @override
   void initState() {
@@ -48,6 +48,10 @@ class RegisterUserPageState extends State<RegisterUserPage> {
       });
       return;
     }
+
+    setState(() {
+      _isLoading = true; // Activar la pantalla de carga
+    });
 
     final user = User(
       name: _nameController.text,
@@ -87,12 +91,20 @@ class RegisterUserPageState extends State<RegisterUserPage> {
           'Se ha producido un error inesperado: ${e.toString()}',
         );
       }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false; // Desactivar la pantalla de carga
+        });
+      }
     }
   }
 
   void _showSuccessDialog() {
     SnackBarService.showSuccessSnackBar(context, 'Registro exitoso');
-    Navigator.pop(context);
+    MaterialPageRoute(
+      builder: (context) => const LoginPage(),
+    );
   }
 
   void _showErrorDialog(String message) {
@@ -104,65 +116,71 @@ class RegisterUserPageState extends State<RegisterUserPage> {
     return KeyboardDismiss(
       child: SafeArea(
         child: Scaffold(
-          body: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
-              child: Form(
-                key: _formKey,
-                autovalidateMode: _autoValidateMode,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    _buildHeader(),
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.04),
-                    _buildTextField(
-                      controller: _nameController,
-                      hintText: 'Nombre Completo',
-                      icon: Icons.person,
-                      validator: Validators.requiredFieldValidator,
+          body: Stack(
+            children: [
+              SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Padding(
+                  padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
+                  child: Form(
+                    key: _formKey,
+                    autovalidateMode: _autoValidateMode,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        _buildHeader(),
+                        SizedBox(height: MediaQuery.of(context).size.height * 0.04),
+                        _buildTextField(
+                          controller: _nameController,
+                          hintText: 'Nombre Completo',
+                          icon: Icons.person,
+                          validator: Validators.requiredFieldValidator,
+                        ),
+                        SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+                        _buildTextField(
+                          controller: _emailController,
+                          hintText: 'Correo Electrónico',
+                          icon: Icons.email,
+                          keyboardType: TextInputType.emailAddress,
+                          validator: Validators.emailValidator,
+                        ),
+                        SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+                        _buildTextField(
+                          controller: _phoneController,
+                          hintText: 'Número Teléfono',
+                          icon: Icons.phone,
+                          keyboardType: TextInputType.phone,
+                          maxLength: 10,
+                          validator: Validators.phoneValidator,
+                        ),
+                        SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+                        _buildTextField(
+                          controller: _addressController,
+                          hintText: 'Dirección',
+                          icon: Icons.home,
+                          keyboardType: TextInputType.streetAddress,
+                          validator: Validators.addressValidator,
+                        ),
+                        SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+                        _buildTextField(
+                          controller: _passwordController,
+                          hintText: 'Contraseña',
+                          icon: Icons.lock,
+                          obscureText: true,
+                          validator: Validators.passwordValidator,
+                        ),
+                        SizedBox(height: MediaQuery.of(context).size.height * 0.05),
+                        _buildRegisterButton(),
+                        SizedBox(height: MediaQuery.of(context).size.height * 0.04),
+                        _buildLoginPrompt(),
+                      ],
                     ),
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                    _buildTextField(
-                      controller: _emailController,
-                      hintText: 'Correo Electrónico',
-                      icon: Icons.email,
-                      keyboardType: TextInputType.emailAddress,
-                      validator: Validators.emailValidator,
-                    ),
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                    _buildTextField(
-                      controller: _phoneController,
-                      hintText: 'Número Teléfono',
-                      icon: Icons.phone,
-                      keyboardType: TextInputType.phone,
-                      maxLength: 10,
-                      validator: Validators.phoneValidator,
-                    ),
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                    _buildTextField(
-                      controller: _addressController,
-                      hintText: 'Dirección',
-                      icon: Icons.home,
-                      keyboardType: TextInputType.streetAddress,
-                      validator: Validators.addressValidator,
-                    ),
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                    _buildTextField(
-                      controller: _passwordController,
-                      hintText: 'Contraseña',
-                      icon: Icons.lock,
-                      obscureText: true,
-                      validator: Validators.passwordValidator,
-                    ),
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-                    _buildRegisterButton(),
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.04),
-                    _buildLoginPrompt(),
-                  ],
+                  ),
                 ),
               ),
-            ),
+              if (_isLoading) // Mostrar la pantalla de carga si _isLoading es true
+                _buildLoadingOverlay(),
+            ],
           ),
         ),
       ),
@@ -201,6 +219,7 @@ class RegisterUserPageState extends State<RegisterUserPage> {
     return CustomButton(
       text: 'Registrarse',
       onPressed: _canRegister() ? _registerUser : null,
+      enabled: !_isLoading,
       colorFondo: Colors.redAccent,
     );
   }
@@ -242,4 +261,28 @@ class RegisterUserPageState extends State<RegisterUserPage> {
       ],
     );
   }
+
+  // Widget para el overlay de carga
+  Widget _buildLoadingOverlay() {
+  return Positioned.fill(
+    child: Stack(
+      children: [
+        ModalBarrier(
+          dismissible: false,
+          color: Colors.black.withOpacity(0.5),
+        ),
+        Center(
+          child: SizedBox(
+            width: 100,  // Ancho del CircularProgressIndicator
+            height: 100, // Altura del CircularProgressIndicator
+            child: CircularProgressIndicator(
+              color: Colors.redAccent,
+              strokeWidth: 8,  // Ajusta el grosor del borde
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
 }

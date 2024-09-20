@@ -80,12 +80,7 @@ class RegisterLibroPageState extends State<RegisterLibroPage> {
 
   void _showSuccessDialog() {
     SnackBarService.showSuccessSnackBar(context, 'Libro registrado exitosamente');
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>  UserLibrosDisponiblesPage(isPrincipal: false),
-      ),
-    );
+    Navigator.pop(context);
   }
 
   void _showErrorDialog(String message) {
