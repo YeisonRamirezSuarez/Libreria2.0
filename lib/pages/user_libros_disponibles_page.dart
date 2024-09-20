@@ -1,99 +1,200 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/widgets/card_libro_view.dart';
-import 'package:libreria_app/widgets/custom_button.dart';
-import 'package:libreria_app/widgets/item_banner_user.dart';
+import 'package:libreria_app/pages/register_libro_page.dart';
+import 'package:libreria_app/services/api_service.dart';
+import 'package:libreria_app/services/shared_preferences.dart';
+import 'package:libreria_app/widgets/libros_tab.dart';
+import 'package:libreria_app/widgets/perfil_tab.dart';
+import 'package:libreria_app/widgets/prestamos_tab.dart';
 
-class UserLibrosDisponiblesPage extends StatelessWidget {
+class UserLibrosDisponiblesPage extends StatefulWidget {
+  final bool isAdminHistoric;
+  final bool isUserHistoric;
+  final bool isPrincipal;
+
+  UserLibrosDisponiblesPage({
+    super.key,
+    this.isAdminHistoric = false,
+    this.isUserHistoric = false,
+    this.isPrincipal = false,
+  });
+
   @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        body: Column(
-          children: [
-            ItemBannerUser(
-            estadoUsuario: true,
-             seaching: true,
-             titleBaner: "Libros Disponibles",
-             rolUser: "Usuario",
-             nameUser: "Yeison Ramirez",
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: GridView.count(
-                  crossAxisCount: 2, // Dos columnas
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                  childAspectRatio: 0.85, // Proporción de las tarjetas (más compactas)
-                  children: [
-                    libroCard('El principito', 'Antoine de Saint-Exupéry',
-                        'https://th.bing.com/th/id/OIP.6yF35Z7NHmGbFjZMc9aAhQHaKi?w=984&h=1400&rs=1&pid=ImgDetMain'),
-                    libroCard(
-                        'Harry Potter y la piedra filosofal',
-                        'J.K. Rowling',
-                        'https://th.bing.com/th/id/OIP.HMyiZ79cUZ2RtWOHeQqPYwHaLz?rs=1&pid=ImgDetMain'),
-                    libroCard('Sofia Qm', 'princesa',
-                        'https://th.bing.com/th/id/OIP.5NZ0uREl1IhFQhNIu9JDjQHaJn?rs=1&pid=ImgDetMain'),
-                    libroCard('El West', 'STREAMING',
-                        'https://th.bing.com/th/id/OIP.U8ToD6L1AYWfL4fpQWXtowHaEK?rs=1&pid=ImgDetMain'),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  _UserLibrosDisponiblesPageState createState() =>
+      _UserLibrosDisponiblesPageState();
+}
+
+class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage>
+    with SingleTickerProviderStateMixin {
+  Map<String, String>? _userInfo;
+  List<dynamic>? _books;
+  List<dynamic> _filteredBooks = [];
+  bool _isDataLoaded = false;
+  late TabController _tabController;
+  late IconData _selectedIcon = Icons.person;
+  OverlayEntry? _overlayEntry;
+  final GlobalKey _fabKey = GlobalKey();
+  bool _showFloatingActionButton = false;
+  final ApiService _apiService = ApiService(); // Crear una instancia de ApiService
+
+
+  Future<void> _loadData() async {
+    _userInfo = await LoadUserInfo();
+    final email = _userInfo?['email']!;
+
+    final books = widget.isAdminHistoric
+        ? await _apiService.fetchBookPrestados()
+        : await _apiService.fetchBooks();
+
+    setState(() {
+      _books = books;
+      _filteredBooks = books;
+      _isDataLoaded = true;
+    });
   }
 
-  Widget libroCard(String titulo, String autor, String imageUrl) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white, // Fondo blanco
-        borderRadius: BorderRadius.circular(12.0), // Bordes redondeados
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            spreadRadius: 2,
-            blurRadius: 6,
-            offset: Offset(0, 3), // Sombra ligera
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
+  void _filterBooks(String query) {
+    setState(() {
+      final searchQuery = query.toLowerCase();
+      _filteredBooks = _books?.where((book) {
+            final titleLower = book.title.toLowerCase();
+            final authorLower = book.author.toLowerCase();
+            return titleLower.contains(searchQuery) ||
+                authorLower.contains(searchQuery);
+          }).toList() ??
+          [];
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this)
+      ..addListener(() {
+        setState(() {
+          _showFloatingActionButton = _tabController.index == 0 &&
+              !widget.isUserHistoric &&
+              !widget.isAdminHistoric;
+        });
+      });
+    _loadData();
+    _showFloatingActionButton = _tabController.index == 0 &&
+        !widget.isUserHistoric &&
+        !widget.isAdminHistoric;
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _overlayEntry?.remove();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_isDataLoaded) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_userInfo == null) {
+      return const Center(child: Text('No data found'));
+    }
+
+    final role = _userInfo!['role']!;
+    final email = _userInfo!['email']!;
+    final name = _userInfo!['name']!;
+    final phone = _userInfo!['phone']!;
+
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: SafeArea(
+        child: Stack(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8.0), // Bordes redondeados para la imagen
-              child: Image.network(
-                imageUrl,
-                fit: BoxFit.contain, // Cambia a "contain" para que la imagen no se recorte
-                width: 150.0,
-                height: 150.0,
-              ),
+            Scaffold(
+              resizeToAvoidBottomInset: false,
+              body: widget.isUserHistoric || widget.isAdminHistoric
+                  ? LibrosTab(
+                      role: role,
+                      email: email,
+                      name: name,
+                      phone: phone,
+                      filterBooks: _filterBooks,
+                      filteredBooks: _filteredBooks,
+                      isAdminHistoric: widget.isAdminHistoric,
+                      isUserHistoric: widget.isUserHistoric,
+                      selectedIcon: _selectedIcon,
+                    )
+                  : DefaultTabController(
+                      length: 3,
+                      child: Scaffold(
+                        resizeToAvoidBottomInset: false,
+                        body: TabBarView(
+                          controller: _tabController,
+                          children: [
+                            LibrosTab(
+                              role: role,
+                              email: email,
+                              name: name,
+                              phone: phone,
+                              filterBooks: _filterBooks,
+                              filteredBooks: _filteredBooks,
+                              isAdminHistoric: widget.isAdminHistoric,
+                              isUserHistoric: widget.isUserHistoric,
+                              selectedIcon: _selectedIcon,
+                            ),
+                            PrestamosTab(),
+                            PerfilTab(
+                              userName: name,
+                              rolUser: role,
+                              selectedIcon: _selectedIcon,
+                              onIconChanged: (icon) => setState(() {
+                                _selectedIcon = icon;
+                                _tabController.index = 0;
+                              }),
+                            ),
+                          ],
+                        ),
+                        bottomNavigationBar: TabBar(
+                          controller: _tabController,
+                          tabs: const [
+                            Tab(
+                                icon: Icon(Icons.library_books),
+                                text: 'Libros'),
+                            Tab(
+                                icon: Icon(Icons.book),
+                                text: 'Libros Prestados'),
+                            Tab(icon: Icon(Icons.person), text: 'Perfil'),
+                          ],
+                          labelColor: Colors.redAccent,
+                          unselectedLabelColor: Colors.grey,
+                          indicatorColor: Colors.redAccent,
+                        ),
+                      ),
+                    ),
             ),
-            SizedBox(height: 8.0),
-            Text(
-              titulo,
-              style: TextStyle(
-                fontSize: 16.0,
-                fontWeight: FontWeight.bold,
-                color: Colors.black, // Texto negro
+            if (_showFloatingActionButton)
+              Positioned(
+                bottom: 95.0,
+                right: 30.0,
+                child: FloatingActionButton(
+                  key: _fabKey,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => RegisterLibroPage(
+                          name: name,
+                          rol: role,
+                          selectedIcon: _selectedIcon,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Icon(Icons.add, color: Colors.white, size: 40.0),
+                  backgroundColor: Colors.redAccent,
+                ),
               ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 4.0),
-            Text(
-              autor,
-              style: TextStyle(
-                fontSize: 14.0,
-                color: Colors.grey[600], // Texto gris para el autor
-              ),
-              textAlign: TextAlign.center,
-            ),
           ],
         ),
       ),
