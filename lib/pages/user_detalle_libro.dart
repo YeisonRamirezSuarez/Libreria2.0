@@ -12,8 +12,7 @@ class BookDetailPage extends StatelessWidget {
   final String name;
   final String titleBaner;
   final int cantButton;
-  final ApiService _apiService = ApiService(); 
-
+  final ApiService _apiService = ApiService();
 
   BookDetailPage({
     super.key,
@@ -24,7 +23,14 @@ class BookDetailPage extends StatelessWidget {
     required this.cantButton,
   });
 
-  Future<void> _launchURL(String url) async {
+  Future<void> _launchURL(BuildContext context, String url) async {
+    //verificar si es una url mostrar alerta
+    if (!url.startsWith('http') && !url.startsWith('https')) {
+      SnackBarService.showErrorSnackBar(
+          context, "No se pudo abrir la URL: $url");
+      return;
+    }
+
     if (!await launchUrl(Uri.parse(url))) {
       throw Exception('No se pudo abrir la URL: $url');
     }
@@ -154,7 +160,7 @@ class BookDetailPage extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
           _buildReturnButton(context, buttonSize),
-          _buildViewButton(buttonSize),
+          _buildViewButton(context, buttonSize),
         ],
       );
     } else if (cantButton == 1) {
@@ -174,20 +180,21 @@ class BookDetailPage extends StatelessWidget {
             try {
               final response = await _apiService.deleteLibroPrestado(usuario);
               if (response.success) {
-                SnackBarService .showSuccessSnackBar(
+                SnackBarService.showSuccessSnackBar(
                     context, 'Libro devuelto exitosamente');
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const UserPrestadoPage(isPrincipal: true),
+                    builder: (context) =>
+                        const UserPrestadoPage(isPrincipal: true),
                   ),
                 );
               } else {
-                SnackBarService .showErrorSnackBar(
+                SnackBarService.showErrorSnackBar(
                     context, response.error ?? 'Error desconocido');
               }
             } catch (error) {
-              SnackBarService .showErrorSnackBar(
+              SnackBarService.showErrorSnackBar(
                   context, 'Error de red: $error');
             }
           },
@@ -198,14 +205,14 @@ class BookDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildViewButton(double buttonSize) {
+  Widget _buildViewButton(context, double buttonSize) {
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
         child: CustomButton(
           text: 'Ver',
           onPressed: () {
-            _launchURL(usuario.bookUrl);
+            _launchURL(context, usuario.bookUrl);
           },
           dimensioneBoton: buttonSize,
           colorFondo: Colors.redAccent,
@@ -223,20 +230,21 @@ class BookDetailPage extends StatelessWidget {
           try {
             final response = await _apiService.prestarLibro(usuario);
             if (response.success) {
-              SnackBarService .showSuccessSnackBar(
+              SnackBarService.showSuccessSnackBar(
                   context, 'Libro prestado exitosamente');
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const UserPrestadoPage(isPrincipal: true),
+                  builder: (context) =>
+                      const UserPrestadoPage(isPrincipal: true),
                 ),
               );
             } else {
-              SnackBarService .showErrorSnackBar(
+              SnackBarService.showErrorSnackBar(
                   context, response.error ?? 'Error desconocido');
             }
           } catch (error) {
-            SnackBarService .showErrorSnackBar(context, 'Error de red: $error');
+            SnackBarService.showErrorSnackBar(context, 'Error de red: $error');
           }
         },
         dimensioneBoton: buttonSize,
