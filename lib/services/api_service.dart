@@ -218,9 +218,6 @@ class ApiService {
   Future<ApiResponseDelete> deleteLibroPrestado(Usuario usuario) async {
     final url = Uri.parse(
         '${ApiEndpoints.deletePrestado}&id=${usuario.id}&email=${usuario.emailUser}');
-    print("email: ${usuario.emailUser}");
-    print("id: ${usuario.id}");
-    print("valor de usuario en json ${usuario.toJson()}");
     try {
       final response = await http.post(
         url,

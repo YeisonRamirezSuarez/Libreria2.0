@@ -41,12 +41,16 @@ class _FormLibroState extends State<FormLibro> {
   bool _isLoading = false;
 
   VoidCallback? _getOnPressedCallback() {
-    bool isFormValid = Validators.requiredFieldValidator(widget.tituloController.text) == null &&
-        Validators.requiredFieldValidator(widget.autorController.text) == null &&
+    bool isFormValid = Validators.requiredFieldValidator(
+                widget.tituloController.text) ==
+            null &&
+        Validators.requiredFieldValidator(widget.autorController.text) ==
+            null &&
         Validators.numberValidator(widget.cantidadController.text) == null &&
         Validators.urlValidator(widget.urlLibroController.text) == null &&
         Validators.urlValidator(widget.urlImagenController.text) == null &&
-        Validators.requiredFieldValidator(widget.descripcionController.text) == null &&
+        Validators.requiredFieldValidator(widget.descripcionController.text) ==
+            null &&
         widget.formKey.currentState?.validate() == true;
 
     return isFormValid ? _handleSubmit : null;
@@ -150,25 +154,25 @@ class _FormLibroState extends State<FormLibro> {
   }
 
   Widget _buildLoadingOverlay() {
-  return Positioned.fill(
-    child: Stack(
-      children: [
-        ModalBarrier(
-          dismissible: false,
-          color: Colors.black.withOpacity(0.5),
-        ),
-        Center(
-          child: SizedBox(
-            width: 100,  // Ancho del CircularProgressIndicator
-            height: 100, // Altura del CircularProgressIndicator
-            child: CircularProgressIndicator(
-              color: Colors.redAccent,
-              strokeWidth: 8,  // Ajusta el grosor del borde
+    return Positioned.fill(
+      child: Stack(
+        children: [
+          ModalBarrier(
+            dismissible: false,
+            color: Colors.black.withOpacity(0.5),
+          ),
+          Center(
+            child: SizedBox(
+              width: 100, // Ancho del CircularProgressIndicator
+              height: 100, // Altura del CircularProgressIndicator
+              child: CircularProgressIndicator(
+                color: Colors.redAccent,
+                strokeWidth: 8, // Ajusta el grosor del borde
+              ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 }

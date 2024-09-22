@@ -19,6 +19,7 @@ class ItemBannerUser extends StatefulWidget {
   final bool viewVolver;
   final bool viewLogout;
   final IconData selectedIcon;
+  final Function(bool)? onLoadingChange; // Callback para controlar la carga
 
   const ItemBannerUser({
     super.key,
@@ -35,6 +36,7 @@ class ItemBannerUser extends StatefulWidget {
     this.viewVolver = false,
     this.selectedIcon = Icons.person,
     this.viewLogout = false,
+    this.onLoadingChange, // Asegurarse de recibir el callback
   });
 
   @override
@@ -76,6 +78,9 @@ class ItemBannerUserState extends State<ItemBannerUser> {
   }
 
   Future<void> _deleteLibro() async {
+    if (widget.onLoadingChange != null) {
+      widget.onLoadingChange!(true); // Mostrar el CircularProgressIndicator
+    }
     try {
       final response = await _apiService.deleteLibro(widget.idLibro.toString());
 
@@ -92,6 +97,10 @@ class ItemBannerUserState extends State<ItemBannerUser> {
     } catch (error) {
       if (mounted) {
         SnackBarService.showErrorSnackBar(context, 'Error de red: $error');
+      }
+    } finally {
+      if (widget.onLoadingChange != null) {
+        widget.onLoadingChange!(false); // Ocultar el CircularProgressIndicator
       }
     }
   }
