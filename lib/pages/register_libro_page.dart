@@ -32,7 +32,8 @@ class RegisterLibroPageState extends State<RegisterLibroPage> {
   final _descripcionController = TextEditingController();
   AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
 
-  final ApiService _apiService = ApiService(); // Crear una instancia de ApiService
+  final ApiService _apiService =
+      ApiService(); // Crear una instancia de ApiService
 
   @override
   void dispose() {
@@ -56,14 +57,15 @@ class RegisterLibroPageState extends State<RegisterLibroPage> {
     final book = Book(
       title: _tituloController.text,
       author: _autorController.text,
-      quantity: _cantidadController.text,
+      quantity: int.parse(_cantidadController.text),
       bookUrl: _urlLibroController.text,
       imageUrl: _urlImagenController.text,
       description: _descripcionController.text,
     );
 
     try {
-      final ApiResponseRegistrer response = await _apiService.registerBook(book); // Llamar a través de la instancia
+      final ApiResponseRegistrer response = await _apiService
+          .registerBook(book); // Llamar a través de la instancia
 
       if (!mounted) return;
 
@@ -79,7 +81,8 @@ class RegisterLibroPageState extends State<RegisterLibroPage> {
   }
 
   void _showSuccessDialog() {
-    SnackBarService.showSuccessSnackBar(context, 'Libro registrado exitosamente');
+    SnackBarService.showSuccessSnackBar(
+        context, 'Libro registrado exitosamente');
     Navigator.pop(context);
   }
 

@@ -36,8 +36,8 @@ class UpdateLibroPageState extends State<UpdateLibroPage> {
   final _descripcionController = TextEditingController();
   AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
 
-  final ApiService _apiService = ApiService(); // Crear una instancia de ApiService
-
+  final ApiService _apiService =
+      ApiService(); // Crear una instancia de ApiService
 
   @override
   void initState() {
@@ -77,7 +77,7 @@ class UpdateLibroPageState extends State<UpdateLibroPage> {
       id: widget.usuario.idBook,
       title: _tituloController.text,
       author: _autorController.text,
-      quantity: _cantidadController.text,
+      quantity: int.parse(_cantidadController.text),
       bookUrl: _urlLibroController.text,
       imageUrl: _urlImagenController.text,
       description: _descripcionController.text,

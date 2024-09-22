@@ -14,7 +14,8 @@ class UserPrestadoPage extends StatefulWidget {
   _UserPrestadoPageState createState() => _UserPrestadoPageState();
 }
 
-class _UserPrestadoPageState extends State<UserPrestadoPage> with SingleTickerProviderStateMixin {
+class _UserPrestadoPageState extends State<UserPrestadoPage>
+    with SingleTickerProviderStateMixin {
   Map<String, String>? _userInfo;
   List<Usuario>? _books;
   List<Usuario> _filteredBooks = [];
@@ -23,8 +24,7 @@ class _UserPrestadoPageState extends State<UserPrestadoPage> with SingleTickerPr
   late TabController _tabController;
   IconData _selectedIcon = Icons.person;
 
-  final ApiService _apiService = ApiService(); 
-
+  final ApiService _apiService = ApiService();
 
   @override
   void initState() {
@@ -56,7 +56,8 @@ class _UserPrestadoPageState extends State<UserPrestadoPage> with SingleTickerPr
       _filteredBooks = _books!.where((book) {
         final titleLower = book.title.toLowerCase();
         final authorLower = book.author.toLowerCase();
-        return titleLower.contains(_searchQuery) || authorLower.contains(_searchQuery);
+        return titleLower.contains(_searchQuery) ||
+            authorLower.contains(_searchQuery);
       }).toList();
     });
   }
@@ -68,7 +69,9 @@ class _UserPrestadoPageState extends State<UserPrestadoPage> with SingleTickerPr
     }
 
     if (_userInfo == null) {
-      return const Center(child: Text('No data found'), );
+      return const Center(
+        child: Text('No data found'),
+      );
     }
 
     final role = _userInfo!['role']!;
@@ -84,7 +87,7 @@ class _UserPrestadoPageState extends State<UserPrestadoPage> with SingleTickerPr
             controller: _tabController,
             children: [
               _buildMisLibrosTab(context, role, name),
-               UserLibrosDisponiblesPage(isUserHistoric: true),
+              UserLibrosDisponiblesPage(isUserHistoric: true),
               _buildPerfilTab(context, name, role),
             ],
           ),
@@ -117,7 +120,8 @@ class _UserPrestadoPageState extends State<UserPrestadoPage> with SingleTickerPr
     );
   }
 
-  Widget _buildPerfilTab(BuildContext context, String userName, String rolUser) {
+  Widget _buildPerfilTab(
+      BuildContext context, String userName, String rolUser) {
     return PerfilTab(
       userName: userName,
       rolUser: rolUser,

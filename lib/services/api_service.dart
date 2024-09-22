@@ -9,11 +9,9 @@ import 'package:libreria_app/models/api_response_models/api_response_update.dart
 import 'package:libreria_app/models/book_model.dart';
 import 'package:libreria_app/models/user_model.dart';
 import 'package:libreria_app/models/usuario_model.dart';
-import 'package:libreria_app/models/usuario_prestado_model.dart';
 import 'package:libreria_app/services/api_helpers.dart';
 import '../models/user_login_model.dart';
 import 'api_endpoints.dart';
-
 
 class ApiService {
   Future<ApiResponseLogin> login(String email, String password) async {
@@ -126,10 +124,6 @@ class ApiService {
     try {
       final response = await http.get(url);
 
-        print(response.body);
-      print(response.statusCode);
-
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
 
@@ -154,7 +148,6 @@ class ApiService {
 
     try {
       final response = await http.get(url);
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
 
@@ -223,8 +216,11 @@ class ApiService {
   }
 
   Future<ApiResponseDelete> deleteLibroPrestado(Usuario usuario) async {
-    final url = Uri.parse('${ApiEndpoints.deletePrestado}&id=${usuario.id}');
-
+    final url = Uri.parse(
+        '${ApiEndpoints.deletePrestado}&id=${usuario.id}&email=${usuario.emailUser}');
+    print("email: ${usuario.emailUser}");
+    print("id: ${usuario.id}");
+    print("valor de usuario en json ${usuario.toJson()}");
     try {
       final response = await http.post(
         url,
@@ -235,7 +231,8 @@ class ApiService {
         final responseBody = json.decode(response.body);
         return ApiResponseDelete.fromJson(responseBody);
       } else {
-        throw Exception('Error al eliminar libro prestado: ${response.statusCode}');
+        throw Exception(
+            'Error al eliminar libro prestado: ${response.statusCode}');
       }
     } catch (error) {
       throw Exception('Error de red: $error');
@@ -256,34 +253,6 @@ class ApiService {
         return ApiResponseDelete.fromJson(responseBody);
       } else {
         throw Exception('Error al eliminar libro: ${response.statusCode}');
-      }
-    } catch (error) {
-      throw Exception('Error de red: $error');
-    }
-  }
-
-  Future<List<UsuarioPrestado>> fetchUsuariosConLibrosPrestados(String idBook) async {
-    final url = Uri.parse('${ApiEndpoints.fetchPrestados}&id=$idBook');
-
-    try {
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-
-        if (data['data'] is List) {
-          return (data['data'] as List)
-              .map((item) => UsuarioPrestado.fromJson(item))
-              .toList();
-        } else {
-          throw Exception('La respuesta no contiene una lista de usuarios');
-        }
-      } else if (response.statusCode == 201) {
-        throw Exception(
-            'Se ha creado un recurso, pero esperábamos una lista de usuarios.');
-      } else {
-        throw Exception(
-            'Error al obtener los usuarios con libros prestados. Código de estado: ${response.statusCode}');
       }
     } catch (error) {
       throw Exception('Error de red: $error');

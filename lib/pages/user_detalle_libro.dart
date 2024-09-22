@@ -47,6 +47,8 @@ class _BookDetailPageState extends State<BookDetailPage> {
     });
     try {
       final response = await _apiService.deleteLibroPrestado(widget.usuario);
+  
+
       if (response.success) {
         SnackBarService.showSuccessSnackBar(context, 'Libro devuelto exitosamente');
         Navigator.pushReplacement(

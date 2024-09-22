@@ -62,7 +62,7 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage>
   // Método para conectar el WebSocket
   void _connectToWebSocket() {
     _channel = WebSocketChannel.connect(
-      Uri.parse('ws://192.168.1.201:2026'), // Cambia la URL según sea necesario
+      Uri.parse('ws://192.168.80.23:2026'), // Cambia la URL según sea necesario
     );
 
     _channel.stream.listen((message) {

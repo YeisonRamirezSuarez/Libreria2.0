@@ -77,7 +77,7 @@ class LibrosTab extends StatelessWidget {
                 name: name,
                 cantidad: (role == 'administrador' && isAdminHistoric)
                     ? ''
-                    : libro.quantity,
+                    : libro.quantity.toString(),
                 selectedIcon: selectedIcon, 
               );
             },

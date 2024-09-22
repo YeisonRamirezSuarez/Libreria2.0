@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:libreria_app/models/data_usuario.dart';
+import 'package:libreria_app/models/usuario_model.dart';
 
 class HistoryLibros extends StatelessWidget {
-  final List<DataUsuario> usuarios;
+  final List<Prestamo> usuarios;
 
   const HistoryLibros({
     super.key,
@@ -82,9 +83,9 @@ class HistoryLibros extends StatelessWidget {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 5.0),
             child: _infoUserLibroPrestado(
-              userName: usuario.nombre,
-              userPhone: usuario.telefono,
-              userEmail: usuario.email,
+              userName: usuario.nombreUsuario,
+              userPhone: usuario.telefonoUsuario,
+              userEmail: usuario.correoUsuario,
             ),
           );
         },
