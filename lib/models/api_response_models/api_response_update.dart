@@ -2,10 +2,10 @@ import 'api_response_base.dart';
 
 class ApiResponseUpdate extends ApiResponseBase {
   ApiResponseUpdate({
-    required bool success,
-    required String message,
-    String? error,
-  }) : super(success: success, message: message, error: error);
+    required super.success,
+    required super.message,
+    super.error,
+  });
 
   factory ApiResponseUpdate.fromJson(Map<String, dynamic> json) {
     return ApiResponseUpdate(

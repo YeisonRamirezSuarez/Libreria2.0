@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:libreria_app/config/config.dart';
 import 'package:libreria_app/models/usuario_model.dart';
 import 'package:libreria_app/pages/user_libros_disponibles_page.dart';
 import 'package:libreria_app/services/api_service.dart';
 import 'package:libreria_app/services/shared_preferences.dart';
 import 'package:libreria_app/widgets/mis_libros_tab.dart';
 import 'package:libreria_app/widgets/perfil_tab.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'dart:convert';
 
 class UserPrestadoPage extends StatefulWidget {
   final bool isPrincipal;
@@ -22,20 +25,23 @@ class _UserPrestadoPageState extends State<UserPrestadoPage>
   bool _isDataLoaded = false;
   String _searchQuery = '';
   late TabController _tabController;
-  IconData _selectedIcon = Icons.person;
+  late IconData _selectedIcon;
 
   final ApiService _apiService = ApiService();
+  late WebSocketChannel _channel;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _loadData();
+    _connectToWebSocket();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _channel.sink.close(); // Cerrar el WebSocket
     super.dispose();
   }
 
@@ -47,6 +53,24 @@ class _UserPrestadoPageState extends State<UserPrestadoPage>
       _books = books;
       _filteredBooks = books;
       _isDataLoaded = true;
+      _selectedIcon = getIconFromString(_userInfo!['icono']!); // Asignar icono aquí
+    });
+  }
+
+  void _connectToWebSocket() {
+    _channel = WebSocketChannel.connect(
+      Uri.parse(AppConfig.wsUrl),
+    );
+
+    _channel.stream.listen((message) {
+      final data = jsonDecode(message);
+      if (data['tipo'] == 'actualizacion') {
+        _loadData(); // Actualiza datos si hay un mensaje de actualización
+      }
+    }, onError: (error) {
+      print('Error en WebSocket: $error');
+    }, onDone: () {
+      _connectToWebSocket(); // Reconectar si la conexión se cierra
     });
   }
 
@@ -62,10 +86,64 @@ class _UserPrestadoPageState extends State<UserPrestadoPage>
     });
   }
 
+  IconData getIconFromString(String iconString) {
+    switch (iconString) {
+      case 'Icons.person':
+        return Icons.person;
+      case 'Icons.account_circle':
+        return Icons.account_circle;
+      case 'Icons.face':
+        return Icons.face;
+      case 'Icons.people':
+        return Icons.people;
+      case 'Icons.supervised_user_circle':
+        return Icons.supervised_user_circle;
+      case 'Icons.group':
+        return Icons.group;
+      case 'Icons.business':
+        return Icons.business;
+      case 'Icons.work':
+        return Icons.work;
+      case 'Icons.person_add':
+        return Icons.person_add;
+      case 'Icons.person_remove':
+        return Icons.person_remove;
+      case 'Icons.contact_mail':
+        return Icons.contact_mail;
+      case 'Icons.contact_phone':
+        return Icons.contact_phone;
+      case 'Icons.email':
+        return Icons.email;
+      case 'Icons.phone':
+        return Icons.phone;
+      case 'Icons.card_membership':
+        return Icons.card_membership;
+      case 'Icons.badge':
+        return Icons.badge;
+      case 'Icons.security':
+        return Icons.security;
+      case 'Icons.lock':
+        return Icons.lock;
+      case 'Icons.vpn_key':
+        return Icons.vpn_key;
+      case 'Icons.help':
+        return Icons.help;
+      case 'Icons.info':
+        return Icons.info;
+      default:
+        return Icons.person; // Valor por defecto si no coincide
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_isDataLoaded) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.redAccent),
+          strokeWidth: 8,
+        ),
+      );
     }
 
     if (_userInfo == null) {
@@ -76,6 +154,10 @@ class _UserPrestadoPageState extends State<UserPrestadoPage>
 
     final role = _userInfo!['role']!;
     final name = _userInfo!['name']!;
+    final email = _userInfo!['email']!;
+    final icono = _userInfo!['icono']!;
+  
+    // _selectedIcon se inicializa en _loadData
 
     return GestureDetector(
       onTap: () {
@@ -86,9 +168,9 @@ class _UserPrestadoPageState extends State<UserPrestadoPage>
           body: TabBarView(
             controller: _tabController,
             children: [
-              _buildMisLibrosTab(context, role, name),
-              UserLibrosDisponiblesPage(isUserHistoric: true),
-              _buildPerfilTab(context, name, role),
+              _buildMisLibrosTab(context, role, name, _selectedIcon),
+              const UserLibrosDisponiblesPage(isUserHistoric: true),
+              _buildPerfilTab(context, name, role, email, _selectedIcon),
             ],
           ),
           bottomNavigationBar: BottomAppBar(
@@ -110,7 +192,7 @@ class _UserPrestadoPageState extends State<UserPrestadoPage>
     );
   }
 
-  Widget _buildMisLibrosTab(BuildContext context, String role, String name) {
+  Widget _buildMisLibrosTab(BuildContext context, String role, String name, IconData icono) {
     return MisLibrosTab(
       books: _filteredBooks,
       role: role,
@@ -121,15 +203,16 @@ class _UserPrestadoPageState extends State<UserPrestadoPage>
   }
 
   Widget _buildPerfilTab(
-      BuildContext context, String userName, String rolUser) {
+      BuildContext context, String userName, String rolUser, String email, IconData icono) {
     return PerfilTab(
       userName: userName,
       rolUser: rolUser,
+      emailUser: email,
       selectedIcon: _selectedIcon,
       onIconChanged: (IconData icon) {
         setState(() {
-          _selectedIcon = icon;
-          _tabController.index = 0;
+          _selectedIcon = icon; // Actualiza el icono seleccionado
+          _tabController.index = 0; // Cambia a la pestaña de "Mis Libros"
         });
       },
     );

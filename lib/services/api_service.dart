@@ -10,7 +10,6 @@ import 'package:libreria_app/models/book_model.dart';
 import 'package:libreria_app/models/user_model.dart';
 import 'package:libreria_app/models/usuario_model.dart';
 import 'package:libreria_app/services/api_helpers.dart';
-import '../models/user_login_model.dart';
 import 'api_endpoints.dart';
 
 class ApiService {
@@ -32,6 +31,8 @@ class ApiService {
 
   Future<ApiResponseRegistrer> registerUser(User user) async {
     final url = Uri.parse(ApiEndpoints.registerUser);
+    print("URL: $url");
+    print(user.toJson());
 
     try {
       final response = await http.post(
@@ -40,7 +41,32 @@ class ApiService {
         body: json.encode(user.toJson()),
       );
 
+
+      print(response.body);
+      print(response.statusCode);
+
       return ApiResponseRegistrer.fromJson(json.decode(response.body));
+    } catch (error) {
+      throw Exception('Error de red: $error');
+    }
+  }
+
+  Future<ApiResponseBase> updateUser(User user) async {
+    final url = Uri.parse('${ApiEndpoints.updateUser}&email=${user.email}');
+
+    print("URL: $url");
+    print(user.toJson());
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(user.toJson()),
+      );
+      print(response.body);
+      print(response.statusCode);
+      final responseBody = json.decode(response.body);
+      return ApiResponseBase.fromJson(responseBody, "success update user");
     } catch (error) {
       throw Exception('Error de red: $error');
     }

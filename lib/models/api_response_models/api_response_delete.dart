@@ -2,10 +2,10 @@ import 'api_response_base.dart';
 
 class ApiResponseDelete extends ApiResponseBase {
   ApiResponseDelete({
-    required bool success,
-    required String message,
-    String? error,
-  }) : super(success: success, message: message, error: error);
+    required super.success,
+    required super.message,
+    super.error,
+  });
 
   factory ApiResponseDelete.fromJson(Map<String, dynamic> json) {
     return ApiResponseDelete(

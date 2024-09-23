@@ -12,6 +12,9 @@ Future<ApiResponseLogin> handleLoginResponse(http.Response response, String emai
     await prefs.setString('rol', data['rol']);
     await prefs.setString('name', data['name']);
     await prefs.setString('phone', data['phone']);
+    await prefs.setString('icono', data['icono']);
+
+    print("data['icono']: ${data['icono']}");
 
     return ApiResponseLogin(user: UserLogin.fromJson(data));
   } else {

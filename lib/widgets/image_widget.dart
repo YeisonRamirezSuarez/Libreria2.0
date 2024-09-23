@@ -90,7 +90,9 @@ class _ImageWidgetState extends State<ImageWidget> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(8.0),
       child: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.redAccent),
+          ))
           : _hasError
               ? const Icon(
                   Icons.error,

@@ -191,7 +191,7 @@ class UpdateLibroPageState extends State<UpdateLibroPage> {
             dismissible: false,
             color: Colors.black.withOpacity(0.5),
           ),
-          Center(
+          const Center(
             child: SizedBox(
               width: 100,
               height: 100,

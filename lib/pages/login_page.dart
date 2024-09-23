@@ -91,8 +91,8 @@ class LoginPageState extends State<LoginPage> {
 
   void _navigateBasedOnRole(String role) {
     final route = role == 'administrador'
-        ? UserLibrosDisponiblesPage(isPrincipal: true)
-        : UserPrestadoPage(isPrincipal: true);
+        ? const UserLibrosDisponiblesPage(isPrincipal: true)
+        : const UserPrestadoPage(isPrincipal: true);
 
     Navigator.pushReplacement(
       context,
@@ -225,7 +225,7 @@ Widget _buildLoadingOverlay() {
           dismissible: false,
           color: Colors.black.withOpacity(0.5),
         ),
-        Center(
+        const Center(
           child: SizedBox(
             width: 100,  // Ancho del CircularProgressIndicator
             height: 100, // Altura del CircularProgressIndicator

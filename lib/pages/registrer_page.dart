@@ -283,7 +283,7 @@ class RegisterUserPageState extends State<RegisterUserPage> {
             dismissible: false,
             color: Colors.black.withOpacity(0.5),
           ),
-          Center(
+          const Center(
             child: SizedBox(
               width: 100, // Ancho del CircularProgressIndicator
               height: 100, // Altura del CircularProgressIndicator

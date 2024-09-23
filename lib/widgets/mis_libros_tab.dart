@@ -10,7 +10,7 @@ class MisLibrosTab extends StatelessWidget {
   final void Function(String) filterCallback;
   final IconData selectedIcon;
 
-  const MisLibrosTab({
+  const MisLibrosTab({super.key, 
     required this.books,
     required this.role,
     required this.name,

@@ -13,7 +13,7 @@ class BookDetailPage extends StatefulWidget {
   final String titleBaner;
   final int cantButton;
 
-  BookDetailPage({
+  const BookDetailPage({
     super.key,
     required this.usuario,
     required this.role,
@@ -297,7 +297,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
           dismissible: false,
           color: Colors.black.withOpacity(0.5),
         ),
-        Center(
+        const Center(
           child: SizedBox(
             width: 100,  // Ancho del CircularProgressIndicator
             height: 100, // Altura del CircularProgressIndicator

@@ -5,6 +5,7 @@ class ApiEndpoints {
 
   static String get login => '$baseUrl/login.php';
   static String get registerUser => '$baseUrl/usuario.php';
+  static String get updateUser => '$baseUrl/usuario.php?update=1';
   static String get registerBook => '$baseUrl/libro.php';
   static String get fetchBook => '$baseUrl/libro.php';
   static String get fetchBooks => '$baseUrl/libro.php';

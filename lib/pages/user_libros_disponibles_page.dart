@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:libreria_app/config/config.dart';
 import 'package:libreria_app/pages/register_libro_page.dart';
 import 'package:libreria_app/services/api_service.dart';
 import 'package:libreria_app/services/shared_preferences.dart';
@@ -14,7 +15,7 @@ class UserLibrosDisponiblesPage extends StatefulWidget {
   final bool isUserHistoric;
   final bool isPrincipal;
 
-  UserLibrosDisponiblesPage({
+  const UserLibrosDisponiblesPage({
     super.key,
     this.isAdminHistoric = false,
     this.isUserHistoric = false,
@@ -33,11 +34,12 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage>
   List<dynamic> _filteredBooks = [];
   bool _isDataLoaded = false;
   late TabController _tabController;
-  late IconData _selectedIcon = Icons.person;
+  late IconData _selectedIcon;
   OverlayEntry? _overlayEntry;
   final GlobalKey _fabKey = GlobalKey();
   bool _showFloatingActionButton = false;
-  final ApiService _apiService = ApiService(); // Crear una instancia de ApiService
+  final ApiService _apiService =
+      ApiService(); // Crear una instancia de ApiService
   late WebSocketChannel _channel; // Agregar WebSocketChannel
 
   // Método para cargar los datos desde la API
@@ -62,7 +64,7 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage>
   // Método para conectar el WebSocket
   void _connectToWebSocket() {
     _channel = WebSocketChannel.connect(
-      Uri.parse('ws://192.168.80.23:2026'), // Cambia la URL según sea necesario
+      Uri.parse(AppConfig.wsUrl), // Cambia la URL según sea necesario
     );
 
     _channel.stream.listen((message) {
@@ -123,11 +125,70 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage>
     super.dispose();
   }
 
+  IconData getIconFromString(String iconString) {
+    print('iconString: $iconString');
+    switch (iconString) {
+      case 'Icons.person':
+        return Icons.person;
+      case 'Icons.account_circle':
+        return Icons.account_circle;
+      case 'Icons.face':
+        return Icons.face;
+      case 'Icons.people':
+        return Icons.people;
+      case 'Icons.supervised_user_circle':
+        return Icons.supervised_user_circle;
+      case 'Icons.group':
+        return Icons.group;
+      case 'Icons.business':
+        return Icons.business;
+      case 'Icons.work':
+        return Icons.work;
+      case 'Icons.person_add':
+        return Icons.person_add;
+      case 'Icons.person_remove':
+        return Icons.person_remove;
+      case 'Icons.contact_mail':
+        return Icons.contact_mail;
+      case 'Icons.contact_phone':
+        return Icons.contact_phone;
+      case 'Icons.email':
+        return Icons.email;
+      case 'Icons.phone':
+        return Icons.phone;
+      case 'Icons.card_membership':
+        return Icons.card_membership;
+      case 'Icons.badge':
+        return Icons.badge;
+      case 'Icons.security':
+        return Icons.security;
+      case 'Icons.lock':
+        return Icons.lock;
+      case 'Icons.vpn_key':
+        return Icons.vpn_key;
+      case 'Icons.help':
+        return Icons.help;
+      case 'Icons.info':
+        return Icons.info;
+      default:
+        return Icons.person; // Valor por defecto si no coincide
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Mostrar un indicador de carga mientras se cargan los datos
     if (!_isDataLoaded) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: SizedBox(
+          width: 100,
+          height: 100,
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.redAccent),
+            strokeWidth: 8,  // Ajusta el grosor del borde
+          ),
+        ),
+      );
     }
 
     // Si no se encontró información del usuario
@@ -140,6 +201,9 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage>
     final email = _userInfo!['email']!;
     final name = _userInfo!['name']!;
     final phone = _userInfo!['phone']!;
+    final icono = _userInfo!['icono']!;
+
+    _selectedIcon = getIconFromString(icono);
 
     return GestureDetector(
       onTap: () {
@@ -180,16 +244,17 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage>
                               isUserHistoric: widget.isUserHistoric,
                               selectedIcon: _selectedIcon,
                             ),
-                            PrestamosTab(),
+                            const PrestamosTab(),
                             PerfilTab(
-                              userName: name,
-                              rolUser: role,
-                              selectedIcon: _selectedIcon,
-                              onIconChanged: (icon) => setState(() {
-                                _selectedIcon = icon;
-                                _tabController.index = 0;
-                              }),
-                            ),
+                                userName: name,
+                                rolUser: role,
+                                emailUser: email,
+                                selectedIcon: _selectedIcon, // Usa el IconData convertido
+                                onIconChanged: (icon) => setState(() {
+                                  _selectedIcon = icon; // Actualiza el icono seleccionado
+                                  _tabController.index = 0;
+                                }),
+                              ),
                           ],
                         ),
                         bottomNavigationBar: TabBar(
@@ -225,8 +290,8 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage>
                       ),
                     );
                   },
-                  child: Icon(Icons.add, color: Colors.white, size: 40.0),
                   backgroundColor: Colors.redAccent,
+                  child: const Icon(Icons.add, color: Colors.white, size: 40.0),
                 ),
               ),
           ],

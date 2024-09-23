@@ -21,8 +21,8 @@ abstract class ApiResponseBase {
 // Implementación concreta de ApiResponseBase para ser utilizada internamente
 class _ApiResponseBaseImpl extends ApiResponseBase {
   _ApiResponseBaseImpl({
-    required bool success,
-    required String message,
-    String? error,
-  }) : super(success: success, message: message, error: error);
+    required super.success,
+    required super.message,
+    super.error,
+  });
 }

@@ -15,7 +15,7 @@ class LibrosTab extends StatelessWidget {
   final IconData selectedIcon;
 
   const LibrosTab({
-    Key? key,
+    super.key,
     required this.role,
     required this.email,
     required this.name,
@@ -25,7 +25,7 @@ class LibrosTab extends StatelessWidget {
     this.isAdminHistoric = false,
     this.isUserHistoric = false,
     required this.selectedIcon,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -44,44 +44,51 @@ class LibrosTab extends StatelessWidget {
           selectedIcon: selectedIcon,
         ),
         Expanded(
-          child: GridView.builder(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: 0.85,
-            ),
-            itemCount: filteredBooks.length,
-            itemBuilder: (context, index) {
-              final libro = filteredBooks[index];
-              final usuario = libro is Usuario
-                  ? libro
-                  : Usuario(
-                      idBook: libro.id.toString(),
-                      title: libro.title,
-                      author: libro.author,
-                      bookUrl: libro.bookUrl,
-                      imageUrl: libro.imageUrl,
-                      description: libro.description,
-                      date: '',
-                      emailUser: email,
-                      nameUser: name,
-                      phoneUser: phone,
-                    );
+          child: filteredBooks.isEmpty
+              ? const Center(
+                  child: Text(
+                    'No se encontraron libros',
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                  ),
+                )
+              : GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: 0.85,
+                  ),
+                  itemCount: filteredBooks.length,
+                  itemBuilder: (context, index) {
+                    final libro = filteredBooks[index];
+                    final usuario = libro is Usuario
+                        ? libro
+                        : Usuario(
+                            idBook: libro.id.toString(),
+                            title: libro.title,
+                            author: libro.author,
+                            bookUrl: libro.bookUrl,
+                            imageUrl: libro.imageUrl,
+                            description: libro.description,
+                            date: '',
+                            emailUser: email,
+                            nameUser: name,
+                            phoneUser: phone,
+                          );
 
-              return LibroCard(
-                usuario: usuario,
-                isAdminHistoric: isAdminHistoric,
-                isUserHistoric: isUserHistoric,
-                role: role,
-                name: name,
-                cantidad: (role == 'administrador' && isAdminHistoric)
-                    ? ''
-                    : libro.quantity.toString(),
-                selectedIcon: selectedIcon, 
-              );
-            },
-          ),
+                    return LibroCard(
+                      usuario: usuario,
+                      isAdminHistoric: isAdminHistoric,
+                      isUserHistoric: isUserHistoric,
+                      role: role,
+                      name: name,
+                      cantidad: (role == 'administrador' && isAdminHistoric)
+                          ? ''
+                          : libro.quantity.toString(),
+                      selectedIcon: selectedIcon,
+                    );
+                  },
+                ),
         ),
       ],
     );
