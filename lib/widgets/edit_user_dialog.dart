@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/services/snack_bar_service.dart';
-import 'package:libreria_app/widgets/custom_widgets.dart';
+import 'package:LibreriaApp/services/snack_bar_service.dart';
+import 'package:LibreriaApp/widgets/custom_widgets.dart';
 
 class UserEditWidget extends StatefulWidget {
   final List<IconData> availableIcons;

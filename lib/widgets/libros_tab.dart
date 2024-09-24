@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/models/usuario_model.dart';
-import 'package:libreria_app/widgets/custom_widgets.dart';
-import 'package:libreria_app/widgets/libro_card.dart';
+import 'package:LibreriaApp/models/prestamo_model.dart';
+import 'package:LibreriaApp/models/usuario_model.dart';
+import 'package:LibreriaApp/widgets/custom_widgets.dart';
+import 'package:LibreriaApp/widgets/libro_card.dart';
 
 class LibrosTab extends StatelessWidget {
   final String role;
@@ -70,12 +71,17 @@ class LibrosTab extends StatelessWidget {
                             bookUrl: libro.bookUrl,
                             imageUrl: libro.imageUrl,
                             description: libro.description,
-                            date: '',
-                            emailUser: email,
-                            nameUser: name,
-                            phoneUser: phone,
+                            prestamos: isAdminHistoric || isUserHistoric
+                                ? [
+                                    Prestamo(
+                                      fechaPrestamo: '',
+                                      correoUsuario: email,
+                                      nombreUsuario: name,
+                                      telefonoUsuario: phone,
+                                    )
+                                  ]
+                                : [],
                           );
-
                     return LibroCard(
                       usuario: usuario,
                       isAdminHistoric: isAdminHistoric,

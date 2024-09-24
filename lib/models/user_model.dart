@@ -6,7 +6,8 @@ class User {
   final String phone;
   final String address;
   final String password;
-  final String icono; // icono como String
+  final String icono;
+  final String rol;
 
   // Constructor para el registro (todos los valores son requeridos)
   User({
@@ -16,6 +17,7 @@ class User {
     required this.address,
     required this.password,
     this.icono = 'Icons.person', // Valor por defecto como String
+    required this.rol,
   });
 
   // Constructor para actualización (valores opcionales para actualizar)
@@ -26,12 +28,14 @@ class User {
     String? address,
     String? password,
     String? icono,
-  })  : name = name ?? '',  // Valores predeterminados si no se pasan
+    String? rol,
+  })  : name = name ?? '', // Valores predeterminados si no se pasan
         email = email ?? '',
         phone = phone ?? '',
         address = address ?? '',
         password = password ?? '',
-        icono = icono ?? 'Icons.person'; // Valor por defecto como String
+        icono = icono ?? 'Icons.person', // Valor por defecto como String
+        rol = rol ?? '';
 
   // Método para convertir a JSON, solo incluye campos no vacíos
   Map<String, dynamic> toJson() {
@@ -57,24 +61,59 @@ class User {
     }
 
     // Asignar siempre el rol de usuario
-    if (data['rol'] != 'administrador') {
-      data['rol'] = 'usuario';  // El rol siempre será 'usuario'
+    if (rol != 'administrador') {
+      data['rol'] = 'usuario'; // El rol siempre será 'usuario'
     }
 
     return data;
   }
+}
 
-  // Método estático para obtener IconData desde un String
-  static IconData getIconFromString(String iconString) {
-    switch (iconString) {
-      case 'Icons.person':
-        return Icons.person;
-      case 'Icons.home':
-        return Icons.home;
-      case 'Icons.email':
-        return Icons.email;
-      default:
-        return Icons.person; // Valor por defecto si no coincide
-    }
+IconData GetIconFromString(String iconString) {
+  switch (iconString) {
+    case 'Icons.person':
+      return Icons.person;
+    case 'Icons.account_circle':
+      return Icons.account_circle;
+    case 'Icons.face':
+      return Icons.face;
+    case 'Icons.people':
+      return Icons.people;
+    case 'Icons.supervised_user_circle':
+      return Icons.supervised_user_circle;
+    case 'Icons.group':
+      return Icons.group;
+    case 'Icons.business':
+      return Icons.business;
+    case 'Icons.work':
+      return Icons.work;
+    case 'Icons.person_add':
+      return Icons.person_add;
+    case 'Icons.person_remove':
+      return Icons.person_remove;
+    case 'Icons.contact_mail':
+      return Icons.contact_mail;
+    case 'Icons.contact_phone':
+      return Icons.contact_phone;
+    case 'Icons.email':
+      return Icons.email;
+    case 'Icons.phone':
+      return Icons.phone;
+    case 'Icons.card_membership':
+      return Icons.card_membership;
+    case 'Icons.badge':
+      return Icons.badge;
+    case 'Icons.security':
+      return Icons.security;
+    case 'Icons.lock':
+      return Icons.lock;
+    case 'Icons.vpn_key':
+      return Icons.vpn_key;
+    case 'Icons.help':
+      return Icons.help;
+    case 'Icons.info':
+      return Icons.info;
+    default:
+      return Icons.person; // Valor por defecto si no coincide
   }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/models/usuario_model.dart';
-import 'package:libreria_app/pages/user_detalle_libro.dart';
-import 'package:libreria_app/widgets/custom_widgets.dart';
+import 'package:LibreriaApp/models/usuario_model.dart';
+import 'package:LibreriaApp/pages/user_detalle_libro.dart';
+import 'package:LibreriaApp/widgets/custom_widgets.dart';
 
 class MisLibrosTab extends StatelessWidget {
   final List<Usuario> books;
@@ -10,7 +10,8 @@ class MisLibrosTab extends StatelessWidget {
   final void Function(String) filterCallback;
   final IconData selectedIcon;
 
-  const MisLibrosTab({super.key, 
+  const MisLibrosTab({
+    super.key,
     required this.books,
     required this.role,
     required this.name,
@@ -50,6 +51,7 @@ class MisLibrosTab extends StatelessWidget {
                           role: role,
                           name: name,
                           cantButton: 2,
+                          selectedIcon: selectedIcon,
                         ),
                       ),
                     );
@@ -58,7 +60,7 @@ class MisLibrosTab extends StatelessWidget {
                     imageUrl: book.imageUrl,
                     title: book.title,
                     author: book.author,
-                    date: book.date,
+                    date: book.prestamos[0].fechaPrestamo,
                   ),
                 ),
               );

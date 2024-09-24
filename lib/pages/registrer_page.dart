@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/models/user_model.dart';
-import 'package:libreria_app/pages/login_page.dart';
-import 'package:libreria_app/services/api_service.dart';
-import 'package:libreria_app/services/snack_bar_service.dart';
-import 'package:libreria_app/utils/validators.dart';
-import 'package:libreria_app/widgets/custom_widgets.dart';
+import 'package:LibreriaApp/models/user_model.dart';
+import 'package:LibreriaApp/pages/login_page.dart';
+import 'package:LibreriaApp/services/api_service.dart';
+import 'package:LibreriaApp/services/snack_bar_service.dart';
+import 'package:LibreriaApp/utils/validators.dart';
+import 'package:LibreriaApp/widgets/custom_widgets.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -60,6 +60,7 @@ class RegisterUserPageState extends State<RegisterUserPage> {
       phone: _phoneController.text,
       address: _addressController.text,
       password: _passwordController.text,
+      rol: "usuario",
     );
 
     try {

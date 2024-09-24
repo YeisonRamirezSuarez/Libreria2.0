@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/models/book_model.dart';
-import 'package:libreria_app/models/usuario_model.dart';
-import 'package:libreria_app/services/api_service.dart';
-import 'package:libreria_app/services/snack_bar_service.dart';
-import 'package:libreria_app/widgets/custom_widgets.dart';
+import 'package:LibreriaApp/models/book_model.dart';
+import 'package:LibreriaApp/models/usuario_model.dart';
+import 'package:LibreriaApp/services/api_service.dart';
+import 'package:LibreriaApp/services/snack_bar_service.dart';
+import 'package:LibreriaApp/widgets/custom_widgets.dart';
 
 class UpdateLibroPage extends StatefulWidget {
   final String name;
@@ -46,7 +46,6 @@ class UpdateLibroPageState extends State<UpdateLibroPage> {
   }
 
   void _setLoading(bool value) {
-    print("Loading: $value");
     setState(() {
       _isLoading = value;
     });

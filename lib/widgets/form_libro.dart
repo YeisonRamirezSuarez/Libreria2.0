@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/utils/validators.dart';
-import 'package:libreria_app/widgets/custom_text_field.dart';
-import 'package:libreria_app/widgets/custom_button.dart';
+import 'package:LibreriaApp/utils/validators.dart';
+import 'package:LibreriaApp/widgets/custom_text_field.dart';
+import 'package:LibreriaApp/widgets/custom_button.dart';
 
 class FormLibro extends StatefulWidget {
   final GlobalKey<FormState> formKey;

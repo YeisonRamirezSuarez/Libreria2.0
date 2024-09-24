@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/widgets/custom_widgets.dart';
+import 'package:LibreriaApp/widgets/custom_widgets.dart';
 
 class LibroDetails extends StatelessWidget {
   final String imageUrl;

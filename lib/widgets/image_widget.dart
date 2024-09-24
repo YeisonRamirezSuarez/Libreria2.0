@@ -53,7 +53,8 @@ class _ImageWidgetState extends State<ImageWidget> {
       fit: BoxFit.contain,
       width: widget.width * 1.2,
       height: widget.height * 1.1,
-      errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
+      errorBuilder:
+          (BuildContext context, Object error, StackTrace? stackTrace) {
         return const Icon(
           Icons.error,
           color: Colors.red,
@@ -90,9 +91,10 @@ class _ImageWidgetState extends State<ImageWidget> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(8.0),
       child: _isLoading
-          ? const Center(child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.redAccent),
-          ))
+          ? const Center(
+              child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.redAccent),
+            ))
           : _hasError
               ? const Icon(
                   Icons.error,

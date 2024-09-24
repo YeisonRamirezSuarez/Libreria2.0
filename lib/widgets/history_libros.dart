@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/models/usuario_model.dart';
+import 'package:LibreriaApp/models/prestamo_model.dart';
+import 'package:LibreriaApp/models/usuario_model.dart';
 
 class HistoryLibros extends StatelessWidget {
   final List<Prestamo> usuarios;

@@ -1,6 +1,6 @@
 {
-    "name": "libreria_app",
-    "short_name": "libreria_app",
+    "name": "LibreriaApp",
+    "short_name": "LibreriaApp",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

@@ -1,4 +1,4 @@
-import 'package:libreria_app/config/config.dart';
+import 'package:LibreriaApp/config/config.dart';
 
 class ApiEndpoints {
   static const String baseUrl = AppConfig.baseUrl;

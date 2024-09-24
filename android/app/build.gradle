@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.libreria_app"
+    namespace = "com.example.LibreriaApp"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -21,7 +21,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.libreria_app"
+        applicationId = "com.example.LibreriaApp"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -29,12 +29,24 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
+    
+    signingConfigs {
+        release {
+            storeFile file("key.jks") // Asegúrate de que esta ruta sea correcta
+            storePassword "yeison2010" // Reemplaza con la contraseña del keystore
+            keyAlias "key" // El alias que elegiste al crear el keystore
+            keyPassword "yeison2010" // Reemplaza con la contraseña de la clave
+        }
+    }
 
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            //signingConfig = signingConfigs.debug
+            signingConfig signingConfigs.release
+            minifyEnabled false // Cambia a true si deseas usar ProGuard
+            shrinkResources false // Cambia a true si deseas reducir el tamaño
         }
     }
 }

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/pages/registrer_page.dart';
-import 'package:libreria_app/pages/user_libros_disponibles_page.dart';
-import 'package:libreria_app/pages/user_prestado_page.dart';
-import 'package:libreria_app/services/api_service.dart';
-import 'package:libreria_app/utils/validators.dart';
-import 'package:libreria_app/services/dialog_service.dart';
+import 'package:LibreriaApp/pages/registrer_page.dart';
+import 'package:LibreriaApp/pages/user_libros_disponibles_page.dart';
+import 'package:LibreriaApp/pages/user_prestado_page.dart';
+import 'package:LibreriaApp/services/api_service.dart';
+import 'package:LibreriaApp/utils/validators.dart';
+import 'package:LibreriaApp/services/dialog_service.dart';
 import 'dart:async';
 import 'dart:io';
-import 'package:libreria_app/widgets/custom_widgets.dart';
+import 'package:LibreriaApp/widgets/custom_widgets.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -22,7 +22,7 @@ class LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   final ApiService _apiService = ApiService();
   AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
-  bool _isLoading = false;  // Nueva bandera para controlar el estado de carga
+  bool _isLoading = false; // Nueva bandera para controlar el estado de carga
 
   @override
   void initState() {
@@ -53,7 +53,7 @@ class LoginPageState extends State<LoginPage> {
     }
 
     setState(() {
-      _isLoading = true;  // Activar la pantalla de carga
+      _isLoading = true; // Activar la pantalla de carga
     });
 
     final email = _emailController.text;
@@ -73,17 +73,19 @@ class LoginPageState extends State<LoginPage> {
       }
     } on TimeoutException catch (_) {
       if (!mounted) return;
-      _showInfoDialog('El tiempo de espera para la conexión ha expirado. Por favor, informa que el servicio está apagado o no responde.');
+      _showInfoDialog(
+          'El tiempo de espera para la conexión ha expirado. Por favor, informa que el servicio está apagado o no responde.');
     } on SocketException catch (_) {
       if (!mounted) return;
-      _showInfoDialog('No se pudo conectar con el servidor. Por favor, verifique su conexión a Internet.');
+      _showInfoDialog(
+          'No se pudo conectar con el servidor. Por favor, verifique su conexión a Internet.');
     } catch (e) {
       if (!mounted) return;
       _showInfoDialog('Se ha producido un error inesperado: ${e.toString()}');
     } finally {
       if (mounted) {
         setState(() {
-          _isLoading = false;  // Desactivar la pantalla de carga
+          _isLoading = false; // Desactivar la pantalla de carga
         });
       }
     }
@@ -139,8 +141,7 @@ class LoginPageState extends State<LoginPage> {
                 ),
               ),
               // Mostrar la pantalla de carga cuando _isLoading es true
-              if (_isLoading)
-                _buildLoadingOverlay(),
+              if (_isLoading) _buildLoadingOverlay(),
             ],
           ),
         ),
@@ -185,7 +186,7 @@ class LoginPageState extends State<LoginPage> {
               _formKey.currentState?.validate() == true)
           ? _login
           : null,
-      enabled: !_isLoading,  // Deshabilitar el botón si está cargando
+      enabled: !_isLoading, // Deshabilitar el botón si está cargando
     );
   }
 
@@ -217,27 +218,26 @@ class LoginPageState extends State<LoginPage> {
   }
 
   // Widget para el overlay de carga con el contador
-Widget _buildLoadingOverlay() {
-  return Positioned.fill(
-    child: Stack(
-      children: [
-        ModalBarrier(
-          dismissible: false,
-          color: Colors.black.withOpacity(0.5),
-        ),
-        const Center(
-          child: SizedBox(
-            width: 100,  // Ancho del CircularProgressIndicator
-            height: 100, // Altura del CircularProgressIndicator
-            child: CircularProgressIndicator(
-              color: Colors.redAccent,
-              strokeWidth: 8,  // Ajusta el grosor del borde
+  Widget _buildLoadingOverlay() {
+    return Positioned.fill(
+      child: Stack(
+        children: [
+          ModalBarrier(
+            dismissible: false,
+            color: Colors.black.withOpacity(0.5),
+          ),
+          const Center(
+            child: SizedBox(
+              width: 100, // Ancho del CircularProgressIndicator
+              height: 100, // Altura del CircularProgressIndicator
+              child: CircularProgressIndicator(
+                color: Colors.redAccent,
+                strokeWidth: 8, // Ajusta el grosor del borde
+              ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
-
+        ],
+      ),
+    );
+  }
 }
