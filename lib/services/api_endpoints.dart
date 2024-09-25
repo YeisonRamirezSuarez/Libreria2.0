@@ -1,7 +1,7 @@
 import 'package:LibreriaApp/config/config.dart';
 
 class ApiEndpoints {
-  static const String baseUrl = AppConfig.baseUrl;
+  static String get baseUrl => AppConfig.baseUrl;
 
   static String get login => '$baseUrl/login.php';
   static String get registerUser => '$baseUrl/usuario.php';

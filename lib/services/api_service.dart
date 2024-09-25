@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:LibreriaApp/config/config.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:LibreriaApp/models/api_response_models/api_response_base.dart';
@@ -16,6 +17,10 @@ import 'api_endpoints.dart';
 class ApiService {
   Future<ApiResponseLogin> login(String email, String password) async {
     final url = Uri.parse(ApiEndpoints.login);
+
+    print("AppConfig.baseUrl : ${AppConfig.baseUrl}");
+    print("AppConfig.wsUrl : ${AppConfig.wsUrl}");
+    print("url : ${url}");
 
     try {
       final response = await http.post(
