@@ -8,6 +8,7 @@ class BookDetail extends StatelessWidget {
   final double detailFontSize;
 
   const BookDetail({
+    super.key,
     required this.title,
     required this.author,
     required this.date,

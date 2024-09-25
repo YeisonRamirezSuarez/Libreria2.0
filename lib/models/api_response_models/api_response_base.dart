@@ -9,7 +9,8 @@ abstract class ApiResponseBase {
     this.error,
   });
 
-  factory ApiResponseBase.fromJson(Map<String, dynamic> json, String successMessage) {
+  factory ApiResponseBase.fromJson(
+      Map<String, dynamic> json, String successMessage) {
     return _ApiResponseBaseImpl(
       success: json['mensaje'] == successMessage,
       message: json['mensaje'] ?? '',
@@ -21,8 +22,8 @@ abstract class ApiResponseBase {
 // Implementación concreta de ApiResponseBase para ser utilizada internamente
 class _ApiResponseBaseImpl extends ApiResponseBase {
   _ApiResponseBaseImpl({
-    required bool success,
-    required String message,
-    String? error,
-  }) : super(success: success, message: message, error: error);
+    required super.success,
+    required super.message,
+    super.error,
+  });
 }

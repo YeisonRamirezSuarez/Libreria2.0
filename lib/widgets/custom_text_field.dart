@@ -94,14 +94,16 @@ class _CustomTextFieldState extends State<CustomTextField> {
     );
   }
 
-  InputDecoration _inputDecoration(BuildContext context, double screenWidth, double screenHeight) {
+  InputDecoration _inputDecoration(
+      BuildContext context, double screenWidth, double screenHeight) {
     return InputDecoration(
       labelText: widget.hintText,
       labelStyle: const TextStyle(
         color: Colors.white,
         fontSize: 18.0,
       ),
-      prefixIcon: Icon(widget.icon, color: Theme.of(context).inputDecorationTheme.prefixIconColor),
+      prefixIcon: Icon(widget.icon,
+          color: Theme.of(context).inputDecorationTheme.prefixIconColor),
       suffixIcon: widget.obscureText
           ? IconButton(
               icon: Icon(
@@ -115,7 +117,8 @@ class _CustomTextFieldState extends State<CustomTextField> {
               },
             )
           : widget.suffixIcon != null
-              ? Icon(widget.suffixIcon, color: Theme.of(context).inputDecorationTheme.suffixIconColor)
+              ? Icon(widget.suffixIcon,
+                  color: Theme.of(context).inputDecorationTheme.suffixIconColor)
               : null,
       border: InputBorder.none,
       enabledBorder: UnderlineInputBorder(

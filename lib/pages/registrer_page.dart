@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/models/user_model.dart';
-import 'package:libreria_app/pages/login_page.dart';
-import 'package:libreria_app/services/api_service.dart';
-import 'package:libreria_app/services/snack_bar_service.dart';
-import 'package:libreria_app/utils/validators.dart';
-import 'package:libreria_app/widgets/custom_widgets.dart';
+import 'package:LibreriaApp/models/user_model.dart';
+import 'package:LibreriaApp/pages/login_page.dart';
+import 'package:LibreriaApp/services/api_service.dart';
+import 'package:LibreriaApp/services/snack_bar_service.dart';
+import 'package:LibreriaApp/utils/validators.dart';
+import 'package:LibreriaApp/widgets/custom_widgets.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -23,7 +23,8 @@ class RegisterUserPageState extends State<RegisterUserPage> {
   final _addressController = TextEditingController();
   final _passwordController = TextEditingController();
   AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
-  final ApiService _apiService = ApiService(); // Crear una instancia de ApiService
+  final ApiService _apiService =
+      ApiService(); // Crear una instancia de ApiService
   bool _isLoading = false; // Nueva bandera para controlar el estado de carga
 
   @override
@@ -59,12 +60,13 @@ class RegisterUserPageState extends State<RegisterUserPage> {
       phone: _phoneController.text,
       address: _addressController.text,
       password: _passwordController.text,
+      rol: "usuario",
     );
 
     try {
       final response = await _apiService.registerUser(user).timeout(
-        const Duration(seconds: 5),
-      );
+            const Duration(seconds: 5),
+          );
 
       if (!mounted) return;
 
@@ -102,8 +104,11 @@ class RegisterUserPageState extends State<RegisterUserPage> {
 
   void _showSuccessDialog() {
     SnackBarService.showSuccessSnackBar(context, 'Registro exitoso');
-    MaterialPageRoute(
-      builder: (context) => const LoginPage(),
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const LoginPage(),
+      ),
     );
   }
 
@@ -121,7 +126,8 @@ class RegisterUserPageState extends State<RegisterUserPage> {
               SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 child: Padding(
-                  padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
+                  padding:
+                      EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
                   child: Form(
                     key: _formKey,
                     autovalidateMode: _autoValidateMode,
@@ -129,14 +135,16 @@ class RegisterUserPageState extends State<RegisterUserPage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: <Widget>[
                         _buildHeader(),
-                        SizedBox(height: MediaQuery.of(context).size.height * 0.04),
+                        SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.04),
                         _buildTextField(
                           controller: _nameController,
                           hintText: 'Nombre Completo',
                           icon: Icons.person,
                           validator: Validators.requiredFieldValidator,
                         ),
-                        SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+                        SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.02),
                         _buildTextField(
                           controller: _emailController,
                           hintText: 'Correo Electrónico',
@@ -144,7 +152,8 @@ class RegisterUserPageState extends State<RegisterUserPage> {
                           keyboardType: TextInputType.emailAddress,
                           validator: Validators.emailValidator,
                         ),
-                        SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+                        SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.02),
                         _buildTextField(
                           controller: _phoneController,
                           hintText: 'Número Teléfono',
@@ -153,7 +162,8 @@ class RegisterUserPageState extends State<RegisterUserPage> {
                           maxLength: 10,
                           validator: Validators.phoneValidator,
                         ),
-                        SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+                        SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.02),
                         _buildTextField(
                           controller: _addressController,
                           hintText: 'Dirección',
@@ -161,7 +171,8 @@ class RegisterUserPageState extends State<RegisterUserPage> {
                           keyboardType: TextInputType.streetAddress,
                           validator: Validators.addressValidator,
                         ),
-                        SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+                        SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.02),
                         _buildTextField(
                           controller: _passwordController,
                           hintText: 'Contraseña',
@@ -169,9 +180,11 @@ class RegisterUserPageState extends State<RegisterUserPage> {
                           obscureText: true,
                           validator: Validators.passwordValidator,
                         ),
-                        SizedBox(height: MediaQuery.of(context).size.height * 0.05),
+                        SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.05),
                         _buildRegisterButton(),
-                        SizedBox(height: MediaQuery.of(context).size.height * 0.04),
+                        SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.04),
                         _buildLoginPrompt(),
                       ],
                     ),
@@ -264,25 +277,25 @@ class RegisterUserPageState extends State<RegisterUserPage> {
 
   // Widget para el overlay de carga
   Widget _buildLoadingOverlay() {
-  return Positioned.fill(
-    child: Stack(
-      children: [
-        ModalBarrier(
-          dismissible: false,
-          color: Colors.black.withOpacity(0.5),
-        ),
-        Center(
-          child: SizedBox(
-            width: 100,  // Ancho del CircularProgressIndicator
-            height: 100, // Altura del CircularProgressIndicator
-            child: CircularProgressIndicator(
-              color: Colors.redAccent,
-              strokeWidth: 8,  // Ajusta el grosor del borde
+    return Positioned.fill(
+      child: Stack(
+        children: [
+          ModalBarrier(
+            dismissible: false,
+            color: Colors.black.withOpacity(0.5),
+          ),
+          const Center(
+            child: SizedBox(
+              width: 100, // Ancho del CircularProgressIndicator
+              height: 100, // Altura del CircularProgressIndicator
+              child: CircularProgressIndicator(
+                color: Colors.redAccent,
+                strokeWidth: 8, // Ajusta el grosor del borde
+              ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 }

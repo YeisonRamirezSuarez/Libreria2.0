@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 class SnackBarService {
   static bool _isSnackBarShowing = false;
-  static ScaffoldFeatureController<SnackBar, SnackBarClosedReason>? _snackBarController;
+  static ScaffoldFeatureController<SnackBar, SnackBarClosedReason>?
+      _snackBarController;
 
   static void showErrorSnackBar(BuildContext context, String message) {
     if (_isSnackBarShowing) return;

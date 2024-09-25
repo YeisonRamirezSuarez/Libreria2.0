@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/models/api_response_models/api_response_registrer.dart';
-import 'package:libreria_app/models/book_model.dart';
-import 'package:libreria_app/pages/user_libros_disponibles_page.dart';
-import 'package:libreria_app/services/api_service.dart';
-import 'package:libreria_app/services/snack_bar_service.dart';
-import 'package:libreria_app/widgets/custom_widgets.dart';
+import 'package:LibreriaApp/models/api_response_models/api_response_registrer.dart';
+import 'package:LibreriaApp/models/book_model.dart';
+import 'package:LibreriaApp/services/api_service.dart';
+import 'package:LibreriaApp/services/snack_bar_service.dart';
+import 'package:LibreriaApp/widgets/custom_widgets.dart';
 
 class RegisterLibroPage extends StatefulWidget {
   final String name;
@@ -32,7 +31,8 @@ class RegisterLibroPageState extends State<RegisterLibroPage> {
   final _descripcionController = TextEditingController();
   AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
 
-  final ApiService _apiService = ApiService(); // Crear una instancia de ApiService
+  final ApiService _apiService =
+      ApiService(); // Crear una instancia de ApiService
 
   @override
   void dispose() {
@@ -56,14 +56,15 @@ class RegisterLibroPageState extends State<RegisterLibroPage> {
     final book = Book(
       title: _tituloController.text,
       author: _autorController.text,
-      quantity: _cantidadController.text,
+      quantity: int.parse(_cantidadController.text),
       bookUrl: _urlLibroController.text,
       imageUrl: _urlImagenController.text,
       description: _descripcionController.text,
     );
 
     try {
-      final ApiResponseRegistrer response = await _apiService.registerBook(book); // Llamar a través de la instancia
+      final ApiResponseRegistrer response = await _apiService
+          .registerBook(book); // Llamar a través de la instancia
 
       if (!mounted) return;
 
@@ -79,7 +80,8 @@ class RegisterLibroPageState extends State<RegisterLibroPage> {
   }
 
   void _showSuccessDialog() {
-    SnackBarService.showSuccessSnackBar(context, 'Libro registrado exitosamente');
+    SnackBarService.showSuccessSnackBar(
+        context, 'Libro registrado exitosamente');
     Navigator.pop(context);
   }
 
