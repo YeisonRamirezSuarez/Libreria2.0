@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/utils/validators.dart';
-import 'package:libreria_app/widgets/custom_text_field.dart';
-import 'package:libreria_app/widgets/custom_button.dart';
+import 'package:LibreriaApp/utils/validators.dart';
+import 'package:LibreriaApp/widgets/custom_text_field.dart';
+import 'package:LibreriaApp/widgets/custom_button.dart';
 
-class FormLibro extends StatelessWidget {
+class FormLibro extends StatefulWidget {
   final GlobalKey<FormState> formKey;
   final AutovalidateMode autoValidateMode;
   final TextEditingController tituloController;
@@ -12,7 +12,7 @@ class FormLibro extends StatelessWidget {
   final TextEditingController urlLibroController;
   final TextEditingController urlImagenController;
   final TextEditingController descripcionController;
-  final VoidCallback? onPressed; // Make this nullable
+  final Future<void> Function()? onPressed;
   final String name;
   final String rol;
   final String botonTitle;
@@ -27,95 +27,151 @@ class FormLibro extends StatelessWidget {
     required this.urlLibroController,
     required this.urlImagenController,
     required this.descripcionController,
-    this.onPressed, // Allow this to be nullable
+    this.onPressed,
     required this.name,
     required this.rol,
     required this.botonTitle,
   });
 
-  VoidCallback? _getOnPressedCallback() {
-    bool isFormValid = Validators.requiredFieldValidator(tituloController.text) == null &&
-        Validators.requiredFieldValidator(autorController.text) == null &&
-        Validators.numberValidator(cantidadController.text) == null &&
-        Validators.urlValidator(urlLibroController.text) == null &&
-        Validators.urlValidator(urlImagenController.text) == null &&
-        Validators.requiredFieldValidator(descripcionController.text) == null &&
-        formKey.currentState?.validate() == true;
+  @override
+  _FormLibroState createState() => _FormLibroState();
+}
 
-    return isFormValid ? onPressed : null;
+class _FormLibroState extends State<FormLibro> {
+  bool _isLoading = false;
+
+  VoidCallback? _getOnPressedCallback() {
+    bool isFormValid = Validators.requiredFieldValidator(
+                widget.tituloController.text) ==
+            null &&
+        Validators.requiredFieldValidator(widget.autorController.text) ==
+            null &&
+        Validators.numberValidator(widget.cantidadController.text) == null &&
+        Validators.urlValidator(widget.urlLibroController.text) == null &&
+        Validators.urlValidator(widget.urlImagenController.text) == null &&
+        Validators.requiredFieldValidator(widget.descripcionController.text) ==
+            null &&
+        widget.formKey.currentState?.validate() == true;
+
+    return isFormValid ? _handleSubmit : null;
+  }
+
+  Future<void> _handleSubmit() async {
+    if (_isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      if (widget.onPressed != null) {
+        await widget.onPressed!();
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-
-    return Form(
-      key: formKey,
-      autovalidateMode: autoValidateMode,
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.02),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            CustomTextField(
-              hintText: 'Título Libro',
-              icon: Icons.book,
-              controller: tituloController,
-              keyboardType: TextInputType.text,
-              validator: Validators.requiredFieldValidator,
+    return Stack(
+      children: [
+        Form(
+          key: widget.formKey,
+          autovalidateMode: widget.autoValidateMode,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                CustomTextField(
+                  hintText: 'Título Libro',
+                  icon: Icons.book,
+                  controller: widget.tituloController,
+                  keyboardType: TextInputType.text,
+                  validator: Validators.requiredFieldValidator,
+                ),
+                const SizedBox(height: 16.0),
+                CustomTextField(
+                  hintText: 'Autor Libro',
+                  icon: Icons.person,
+                  controller: widget.autorController,
+                  keyboardType: TextInputType.text,
+                  validator: Validators.requiredFieldValidator,
+                ),
+                const SizedBox(height: 16.0),
+                CustomTextField(
+                  hintText: 'Cantidad Libro',
+                  icon: Icons.format_list_numbered,
+                  maxLength: 3,
+                  controller: widget.cantidadController,
+                  keyboardType: TextInputType.number,
+                  validator: Validators.numberValidator,
+                ),
+                const SizedBox(height: 16.0),
+                CustomTextField(
+                  hintText: 'URL Libro',
+                  icon: Icons.link,
+                  controller: widget.urlLibroController,
+                  keyboardType: TextInputType.url,
+                  validator: Validators.urlValidator,
+                ),
+                const SizedBox(height: 16.0),
+                CustomTextField(
+                  hintText: 'Imagen Libro',
+                  icon: Icons.image,
+                  controller: widget.urlImagenController,
+                  keyboardType: TextInputType.url,
+                  validator: Validators.urlValidator,
+                ),
+                const SizedBox(height: 16.0),
+                CustomTextField(
+                  hintText: 'Descripción Libro',
+                  icon: Icons.description,
+                  controller: widget.descripcionController,
+                  keyboardType: TextInputType.multiline,
+                  maxLines: null,
+                  minLines: 3,
+                  validator: Validators.requiredFieldValidator,
+                ),
+                const SizedBox(height: 16.0),
+                CustomButton(
+                  text: widget.botonTitle,
+                  onPressed: _getOnPressedCallback(),
+                  colorFondo: Colors.redAccent,
+                ),
+              ],
             ),
-            SizedBox(height: screenHeight * 0.02),
-            CustomTextField(
-              hintText: 'Autor Libro',
-              icon: Icons.person,
-              controller: autorController,
-              keyboardType: TextInputType.text,
-              validator: Validators.requiredFieldValidator,
-            ),
-            SizedBox(height: screenHeight * 0.02),
-            CustomTextField(
-              hintText: 'Cantidad Libro',
-              icon: Icons.format_list_numbered,
-              maxLength: 3,
-              controller: cantidadController,
-              keyboardType: TextInputType.number,
-              validator: Validators.numberValidator,
-            ),
-            SizedBox(height: screenHeight * 0.02),
-            CustomTextField(
-              hintText: 'URL Libro',
-              icon: Icons.link,
-              controller: urlLibroController,
-              keyboardType: TextInputType.url,
-              validator: Validators.urlValidator,
-            ),
-            SizedBox(height: screenHeight * 0.02),
-            CustomTextField(
-              hintText: 'Imagen Libro',
-              icon: Icons.image,
-              controller: urlImagenController,
-              keyboardType: TextInputType.url,
-              validator: Validators.urlValidator,
-            ),
-            SizedBox(height: screenHeight * 0.02),
-            CustomTextField(
-              hintText: 'Descripción Libro',
-              icon: Icons.description,
-              controller: descripcionController,
-              keyboardType: TextInputType.multiline,
-              maxLines: null,
-              minLines: 3,
-              validator: Validators.requiredFieldValidator,
-            ),
-            SizedBox(height: screenHeight * 0.02),
-            CustomButton(
-              text: botonTitle,
-              onPressed: _getOnPressedCallback(), // Pass the callback directly
-              colorFondo: Colors.redAccent,
-            ),
-          ],
+          ),
         ),
+        if (_isLoading) _buildLoadingOverlay(),
+      ],
+    );
+  }
+
+  Widget _buildLoadingOverlay() {
+    return Positioned.fill(
+      child: Stack(
+        children: [
+          ModalBarrier(
+            dismissible: false,
+            color: Colors.black.withOpacity(0.5),
+          ),
+          const Center(
+            child: SizedBox(
+              width: 100, // Ancho del CircularProgressIndicator
+              height: 100, // Altura del CircularProgressIndicator
+              child: CircularProgressIndicator(
+                color: Colors.redAccent,
+                strokeWidth: 8, // Ajusta el grosor del borde
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

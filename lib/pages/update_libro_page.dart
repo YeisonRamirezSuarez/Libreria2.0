@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/models/book_model.dart';
-import 'package:libreria_app/models/usuario_model.dart';
-import 'package:libreria_app/pages/user_libros_disponibles_page.dart';
-import 'package:libreria_app/services/api_service.dart';
-import 'package:libreria_app/services/snack_bar_service.dart';
-import 'package:libreria_app/widgets/custom_widgets.dart';
+import 'package:LibreriaApp/models/book_model.dart';
+import 'package:LibreriaApp/models/usuario_model.dart';
+import 'package:LibreriaApp/services/api_service.dart';
+import 'package:LibreriaApp/services/snack_bar_service.dart';
+import 'package:LibreriaApp/widgets/custom_widgets.dart';
 
 class UpdateLibroPage extends StatefulWidget {
   final String name;
@@ -35,14 +34,21 @@ class UpdateLibroPageState extends State<UpdateLibroPage> {
   final _urlImagenController = TextEditingController();
   final _descripcionController = TextEditingController();
   AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
+  final ApiService _apiService = ApiService();
 
-  final ApiService _apiService = ApiService(); // Crear una instancia de ApiService
-
+  // Controlador para manejar el estado del progreso
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     _initializeControllers();
+  }
+
+  void _setLoading(bool value) {
+    setState(() {
+      _isLoading = value;
+    });
   }
 
   @override
@@ -77,7 +83,7 @@ class UpdateLibroPageState extends State<UpdateLibroPage> {
       id: widget.usuario.idBook,
       title: _tituloController.text,
       author: _autorController.text,
-      quantity: _cantidadController.text,
+      quantity: int.parse(_cantidadController.text),
       bookUrl: _urlLibroController.text,
       imageUrl: _urlImagenController.text,
       description: _descripcionController.text,
@@ -105,12 +111,7 @@ class UpdateLibroPageState extends State<UpdateLibroPage> {
       context,
       'Libro actualizado exitosamente',
     );
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>  UserLibrosDisponiblesPage(isPrincipal: false),
-      ),
-    );
+    Navigator.pop(context);
   }
 
   void _showErrorDialog(String message) {
@@ -127,17 +128,22 @@ class UpdateLibroPageState extends State<UpdateLibroPage> {
     return KeyboardDismiss(
       child: SafeArea(
         child: Scaffold(
-          body: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: EdgeInsets.all(screenWidth * 0.01),
-              child: Column(
-                children: [
-                  _buildHeader(),
-                  _buildForm(),
-                ],
+          body: Stack(
+            children: [
+              SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Padding(
+                  padding: EdgeInsets.all(screenWidth * 0.01),
+                  child: Column(
+                    children: [
+                      _buildHeader(),
+                      _buildForm(),
+                    ],
+                  ),
+                ),
               ),
-            ),
+              if (_isLoading) _buildLoadingOverlay(),
+            ],
           ),
         ),
       ),
@@ -155,6 +161,7 @@ class UpdateLibroPageState extends State<UpdateLibroPage> {
       selectedIcon: widget.selectedIcon,
       viewAdd: false,
       viewVolver: true,
+      onLoadingChange: _setLoading, // Pasar el estado de progreso al hijo
     );
   }
 
@@ -172,6 +179,29 @@ class UpdateLibroPageState extends State<UpdateLibroPage> {
       name: widget.name,
       rol: widget.rol,
       botonTitle: "Actualizar Libro",
+    );
+  }
+
+  Widget _buildLoadingOverlay() {
+    return Positioned.fill(
+      child: Stack(
+        children: [
+          ModalBarrier(
+            dismissible: false,
+            color: Colors.black.withOpacity(0.5),
+          ),
+          const Center(
+            child: SizedBox(
+              width: 100,
+              height: 100,
+              child: CircularProgressIndicator(
+                color: Colors.redAccent,
+                strokeWidth: 8,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

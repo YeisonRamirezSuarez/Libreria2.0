@@ -2,7 +2,7 @@ class Book {
   final String? id; // El id es opcional
   final String title;
   final String author;
-  final String quantity;
+  final int quantity;
   final String bookUrl;
   final String imageUrl;
   final String description;
@@ -22,7 +22,7 @@ class Book {
       id: json['id'] as String?, // Asegúrate de que 'id' sea del tipo String?
       title: json['title'] as String,
       author: json['author'] as String,
-      quantity: json['quantity'] as String,
+      quantity: json['quantity'] as int,
       bookUrl: json['book_url'] as String,
       imageUrl: json['image_url'] as String,
       description: json['description'] as String,

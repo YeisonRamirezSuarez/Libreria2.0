@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/models/data_usuario.dart';
-import 'package:libreria_app/widgets/custom_widgets.dart';
-
+import 'package:LibreriaApp/models/prestamo_model.dart';
+import 'package:LibreriaApp/models/usuario_model.dart';
+import 'package:LibreriaApp/widgets/custom_widgets.dart';
 
 class BookHistoryCardPage extends StatelessWidget {
   final String imageUrl;
   final String bookTitle;
   final String bookAuthor;
   final String bookDescription;
-  final List<DataUsuario> usuarios;
+  final List<Prestamo> usuarios;
 
   const BookHistoryCardPage({
     super.key,

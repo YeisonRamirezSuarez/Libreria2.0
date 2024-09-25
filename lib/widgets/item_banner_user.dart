@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/pages/login_page.dart';
-import 'package:libreria_app/pages/user_libros_disponibles_page.dart';
-import 'package:libreria_app/services/api_service.dart';
-import 'package:libreria_app/services/snack_bar_service.dart';
-import 'package:libreria_app/widgets/custom_widgets.dart';
+import 'package:LibreriaApp/pages/login_page.dart';
+import 'package:LibreriaApp/services/api_service.dart';
+import 'package:LibreriaApp/services/snack_bar_service.dart';
+import 'package:LibreriaApp/widgets/custom_widgets.dart';
 
 class ItemBannerUser extends StatefulWidget {
   final bool viewAdd;
@@ -19,7 +18,7 @@ class ItemBannerUser extends StatefulWidget {
   final bool viewVolver;
   final bool viewLogout;
   final IconData selectedIcon;
-
+  final Function(bool)? onLoadingChange; 
   const ItemBannerUser({
     super.key,
     this.viewAdd = false,
@@ -33,8 +32,9 @@ class ItemBannerUser extends StatefulWidget {
     this.searchCallback,
     this.removerBanner = false,
     this.viewVolver = false,
-    this.selectedIcon = Icons.person,
+    required this.selectedIcon,
     this.viewLogout = false,
+    this.onLoadingChange, 
   });
 
   @override
@@ -76,6 +76,9 @@ class ItemBannerUserState extends State<ItemBannerUser> {
   }
 
   Future<void> _deleteLibro() async {
+    if (widget.onLoadingChange != null) {
+      widget.onLoadingChange!(true); 
+    }
     try {
       final response = await _apiService.deleteLibro(widget.idLibro.toString());
 
@@ -83,12 +86,7 @@ class ItemBannerUserState extends State<ItemBannerUser> {
         if (response.success) {
           SnackBarService.showSuccessSnackBar(
               context, 'Libro eliminado exitosamente');
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-                builder: (context) =>
-                    UserLibrosDisponiblesPage(isPrincipal: true)),
-          );
+          Navigator.pop(context);
         } else {
           SnackBarService.showErrorSnackBar(
               context, response.error ?? 'Error desconocido');
@@ -97,6 +95,10 @@ class ItemBannerUserState extends State<ItemBannerUser> {
     } catch (error) {
       if (mounted) {
         SnackBarService.showErrorSnackBar(context, 'Error de red: $error');
+      }
+    } finally {
+      if (widget.onLoadingChange != null) {
+        widget.onLoadingChange!(false); 
       }
     }
   }
@@ -122,7 +124,6 @@ class ItemBannerUserState extends State<ItemBannerUser> {
         ),
       );
 
-      // If you are sure Overlay.of(context) is not null, directly use it
       Overlay.of(context).insert(_overlayEntry!);
     }
   }
@@ -151,8 +152,7 @@ class ItemBannerUserState extends State<ItemBannerUser> {
                   onBackTap: () => Navigator.pop(context),
                   onLogoutTap: () => Navigator.push(
                     context,
-                    MaterialPageRoute(
-                        builder: (context) => const LoginPage()),
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
                   ),
                 ),
               const SizedBox(height: 10.0),
@@ -191,13 +191,6 @@ class ItemBannerUserState extends State<ItemBannerUser> {
                         ),
                         onPressed: () {
                           _deleteLibro();
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      UserLibrosDisponiblesPage(
-                                        isPrincipal: true,
-                                      )));
                         },
                       ),
                   ],

@@ -1,15 +1,14 @@
+import 'package:LibreriaApp/models/prestamo_model.dart';
+
 class Usuario {
-  final String? id; // Hacer id opcional
+  final String? id;
   final String idBook;
   final String title;
   final String author;
   final String bookUrl;
   final String imageUrl;
   final String description;
-  final String date;
-  final String emailUser;
-  final String nameUser;
-  final String phoneUser;
+  final List<Prestamo> prestamos;
 
   Usuario({
     this.id,
@@ -19,25 +18,25 @@ class Usuario {
     required this.bookUrl,
     required this.imageUrl,
     required this.description,
-    required this.date,
-    required this.emailUser,
-    required this.nameUser,
-    required this.phoneUser,
+    this.prestamos = const [],
   });
 
   factory Usuario.fromJson(Map<String, dynamic> json) {
+
+    var prestamosFromJson = json['prestamos'] as List? ?? [];
+    List<Prestamo> prestamosList = prestamosFromJson
+        .map((prestamoJson) => Prestamo.fromJson(prestamoJson))
+        .toList();
+
     return Usuario(
-      id: json['id'] as String?,
+      id: json['id'] as String? ?? '',
       idBook: json['id_book'] as String? ?? '',
       title: json['title'] as String? ?? '',
       author: json['author'] as String? ?? '',
       bookUrl: json['book_url'] as String? ?? '',
       imageUrl: json['image_url'] as String? ?? '',
       description: json['description'] as String? ?? '',
-      date: json['date'] as String? ?? '',
-      emailUser: json['email_user'] as String? ?? '',
-      nameUser: json['name_user'] as String? ?? '',
-      phoneUser: json['phone_user'] as String? ?? '',
+      prestamos: prestamosList,
     );
   }
 
@@ -49,10 +48,7 @@ class Usuario {
       'book_url': bookUrl,
       'image_url': imageUrl,
       'description': description,
-      'date': date,
-      'email_user': emailUser,
-      'name_user': nameUser,
-      'phone_user': phoneUser,
+      'prestamos': prestamos.map((prestamo) => prestamo.toJson()).toList(),
     };
     if (id != null) {
       data['id'] = id;

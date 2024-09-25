@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/models/usuario_model.dart';
-import 'package:libreria_app/widgets/custom_widgets.dart';
-import 'package:libreria_app/widgets/libro_card.dart';
+import 'package:LibreriaApp/models/prestamo_model.dart';
+import 'package:LibreriaApp/models/usuario_model.dart';
+import 'package:LibreriaApp/widgets/custom_widgets.dart';
+import 'package:LibreriaApp/widgets/libro_card.dart';
 
 class LibrosTab extends StatelessWidget {
   final String role;
@@ -15,7 +16,7 @@ class LibrosTab extends StatelessWidget {
   final IconData selectedIcon;
 
   const LibrosTab({
-    Key? key,
+    super.key,
     required this.role,
     required this.email,
     required this.name,
@@ -25,7 +26,7 @@ class LibrosTab extends StatelessWidget {
     this.isAdminHistoric = false,
     this.isUserHistoric = false,
     required this.selectedIcon,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -44,44 +45,56 @@ class LibrosTab extends StatelessWidget {
           selectedIcon: selectedIcon,
         ),
         Expanded(
-          child: GridView.builder(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: 0.85,
-            ),
-            itemCount: filteredBooks.length,
-            itemBuilder: (context, index) {
-              final libro = filteredBooks[index];
-              final usuario = libro is Usuario
-                  ? libro
-                  : Usuario(
-                      idBook: libro.id.toString(),
-                      title: libro.title,
-                      author: libro.author,
-                      bookUrl: libro.bookUrl,
-                      imageUrl: libro.imageUrl,
-                      description: libro.description,
-                      date: '',
-                      emailUser: email,
-                      nameUser: name,
-                      phoneUser: phone,
+          child: filteredBooks.isEmpty
+              ? const Center(
+                  child: Text(
+                    'No se encontraron libros',
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                  ),
+                )
+              : GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: 0.85,
+                  ),
+                  itemCount: filteredBooks.length,
+                  itemBuilder: (context, index) {
+                    final libro = filteredBooks[index];
+                    final usuario = libro is Usuario
+                        ? libro
+                        : Usuario(
+                            idBook: libro.id.toString(),
+                            title: libro.title,
+                            author: libro.author,
+                            bookUrl: libro.bookUrl,
+                            imageUrl: libro.imageUrl,
+                            description: libro.description,
+                            prestamos: isAdminHistoric || isUserHistoric
+                                ? [
+                                    Prestamo(
+                                      fechaPrestamo: '',
+                                      correoUsuario: email,
+                                      nombreUsuario: name,
+                                      telefonoUsuario: phone,
+                                    )
+                                  ]
+                                : [],
+                          );
+                    return LibroCard(
+                      usuario: usuario,
+                      isAdminHistoric: isAdminHistoric,
+                      isUserHistoric: isUserHistoric,
+                      role: role,
+                      name: name,
+                      cantidad: (role == 'administrador' && isAdminHistoric)
+                          ? ''
+                          : libro.quantity.toString(),
+                      selectedIcon: selectedIcon,
                     );
-
-              return LibroCard(
-                usuario: usuario,
-                isAdminHistoric: isAdminHistoric,
-                isUserHistoric: isUserHistoric,
-                role: role,
-                name: name,
-                cantidad: (role == 'administrador' && isAdminHistoric)
-                    ? ''
-                    : libro.quantity,
-                selectedIcon: selectedIcon, 
-              );
-            },
-          ),
+                  },
+                ),
         ),
       ],
     );

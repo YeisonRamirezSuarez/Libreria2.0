@@ -8,7 +8,7 @@ class DataUsuario {
     required this.telefono,
     required this.email,
   });
-  
+
   factory DataUsuario.fromJson(Map<String, dynamic> json) {
     return DataUsuario(
       nombre: json['nombre'] as String,

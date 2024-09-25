@@ -1,13 +1,15 @@
+import 'package:LibreriaApp/config/config.dart';
+import 'package:LibreriaApp/widgets/config_widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:libreria_app/pages/registrer_page.dart';
-import 'package:libreria_app/pages/user_libros_disponibles_page.dart';
-import 'package:libreria_app/pages/user_prestado_page.dart';
-import 'package:libreria_app/services/api_service.dart';
-import 'package:libreria_app/utils/validators.dart';
-import 'package:libreria_app/services/dialog_service.dart';
+import 'package:LibreriaApp/pages/registrer_page.dart';
+import 'package:LibreriaApp/pages/user_libros_disponibles_page.dart';
+import 'package:LibreriaApp/pages/user_prestado_page.dart';
+import 'package:LibreriaApp/services/api_service.dart';
+import 'package:LibreriaApp/utils/validators.dart';
+import 'package:LibreriaApp/services/dialog_service.dart';
 import 'dart:async';
 import 'dart:io';
-import 'package:libreria_app/widgets/custom_widgets.dart';
+import 'package:LibreriaApp/widgets/custom_widgets.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -22,10 +24,12 @@ class LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   final ApiService _apiService = ApiService();
   AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
+  bool _isLoading = false; // Nueva bandera para controlar el estado de carga
 
   @override
   void initState() {
     super.initState();
+    AppConfig.loadConfig(); 
     _emailController.addListener(_updateButtonState);
     _passwordController.addListener(_updateButtonState);
   }
@@ -51,37 +55,82 @@ class LoginPageState extends State<LoginPage> {
       return;
     }
 
+    setState(() {
+      _isLoading = true;
+    });
+
     final email = _emailController.text;
     final password = _passwordController.text;
 
-    try {
-      final response = await _apiService
-          .login(email, password)
-          .timeout(const Duration(seconds: 5));
+    if (email == 'superadmin@wposs.com' && password == 'admin1234') {
+      _isLoading = false;
+      _showConfigModal();
+    } else {
+      try {
+        final response = await _apiService
+            .login(email, password)
+            .timeout(const Duration(seconds: 5));
 
-      if (!mounted) return;
+        if (!mounted) return;
 
-      if (response.user != null) {
-        _navigateBasedOnRole(response.user!.role);
-      } else {
-        _showInfoDialog(response.error ?? 'Error desconocido');
+        if (response.user != null) {
+          _navigateBasedOnRole(response.user!.role);
+        } else {
+          _showInfoDialog(response.error ?? 'Error desconocido');
+        }
+      } on TimeoutException catch (_) {
+        if (!mounted) return;
+        _showInfoDialog(
+            'El tiempo de espera para la conexión ha expirado. Por favor, informa que el servicio está apagado o no responde.');
+      } on SocketException catch (_) {
+        if (!mounted) return;
+        _showInfoDialog(
+            'No se pudo conectar con el servidor. Por favor, verifique su conexión a Internet.');
+      } catch (e) {
+        if (!mounted) return;
+        _showInfoDialog('Se ha producido un error inesperado: ${e.toString()}');
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false; // Desactivar la pantalla de carga
+          });
+        }
       }
-    } on TimeoutException catch (_) {
-      if (!mounted) return;
-      _showInfoDialog('El tiempo de espera para la conexión ha expirado. Por favor, informa que el servicio está apagado o no responde.');
-    } on SocketException catch (_) {
-      if (!mounted) return;
-      _showInfoDialog('No se pudo conectar con el servidor. Por favor, verifique su conexión a Internet.');
-    } catch (e) {
-      if (!mounted) return;
-      _showInfoDialog('Se ha producido un error inesperado: ${e.toString()}');
     }
+  }
+
+  void _showConfigModal() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Configuración'),
+          content: ConfigWidget(),
+          actions: [
+            TextButton(
+              onPressed: () {
+                FocusScope.of(context).unfocus();
+                _formKey.currentState?.reset();
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LoginPage(),
+                  ),
+                );
+              },
+              child:
+                  const Text('Cerrar', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _navigateBasedOnRole(String role) {
     final route = role == 'administrador'
-        ? UserLibrosDisponiblesPage(isPrincipal: true)
-        : UserPrestadoPage(isPrincipal: true);
+        ? const UserLibrosDisponiblesPage(isPrincipal: true)
+        : const UserPrestadoPage(isPrincipal: true);
 
     Navigator.pushReplacement(
       context,
@@ -101,29 +150,35 @@ class LoginPageState extends State<LoginPage> {
     return KeyboardDismiss(
       child: SafeArea(
         child: Scaffold(
-          body: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: EdgeInsets.all(screenWidth * 0.05),
-              child: Form(
-                key: _formKey,
-                autovalidateMode: _autoValidateMode,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildHeader(),
-                    SizedBox(height: screenHeight * 0.1),
-                    _buildEmailField(),
-                    SizedBox(height: screenHeight * 0.02),
-                    _buildPasswordField(),
-                    SizedBox(height: screenHeight * 0.05),
-                    _buildLoginButton(),
-                    SizedBox(height: screenHeight * 0.05),
-                    _buildFooter(screenWidth),
-                  ],
+          body: Stack(
+            children: [
+              SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Padding(
+                  padding: EdgeInsets.all(screenWidth * 0.05),
+                  child: Form(
+                    key: _formKey,
+                    autovalidateMode: _autoValidateMode,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildHeader(),
+                        SizedBox(height: screenHeight * 0.1),
+                        _buildEmailField(),
+                        SizedBox(height: screenHeight * 0.02),
+                        _buildPasswordField(),
+                        SizedBox(height: screenHeight * 0.05),
+                        _buildLoginButton(),
+                        SizedBox(height: screenHeight * 0.05),
+                        _buildFooter(screenWidth),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            ),
+              // Mostrar la pantalla de carga cuando _isLoading es true
+              if (_isLoading) _buildLoadingOverlay(),
+            ],
           ),
         ),
       ),
@@ -167,6 +222,7 @@ class LoginPageState extends State<LoginPage> {
               _formKey.currentState?.validate() == true)
           ? _login
           : null,
+      enabled: !_isLoading, // Deshabilitar el botón si está cargando
     );
   }
 
@@ -194,6 +250,30 @@ class LoginPageState extends State<LoginPage> {
           ),
         ),
       ],
+    );
+  }
+
+  // Widget para el overlay de carga con el contador
+  Widget _buildLoadingOverlay() {
+    return Positioned.fill(
+      child: Stack(
+        children: [
+          ModalBarrier(
+            dismissible: false,
+            color: Colors.black.withOpacity(0.5),
+          ),
+          const Center(
+            child: SizedBox(
+              width: 100, // Ancho del CircularProgressIndicator
+              height: 100, // Altura del CircularProgressIndicator
+              child: CircularProgressIndicator(
+                color: Colors.redAccent,
+                strokeWidth: 8, // Ajusta el grosor del borde
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

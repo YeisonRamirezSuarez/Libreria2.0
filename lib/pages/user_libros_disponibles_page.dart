@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/pages/register_libro_page.dart';
-import 'package:libreria_app/services/api_service.dart';
-import 'package:libreria_app/services/shared_preferences.dart';
-import 'package:libreria_app/widgets/libros_tab.dart';
-import 'package:libreria_app/widgets/perfil_tab.dart';
-import 'package:libreria_app/widgets/prestamos_tab.dart';
+import 'package:LibreriaApp/config/config.dart';
+import 'package:LibreriaApp/models/user_model.dart';
+import 'package:LibreriaApp/pages/register_libro_page.dart';
+import 'package:LibreriaApp/services/api_service.dart';
+import 'package:LibreriaApp/services/shared_preferences.dart';
+import 'package:LibreriaApp/services/snack_bar_service.dart';
+import 'package:LibreriaApp/widgets/custom_widgets.dart';
+import 'package:LibreriaApp/widgets/libros_tab.dart';
+import 'package:LibreriaApp/widgets/perfil_tab.dart';
+import 'package:LibreriaApp/widgets/prestamos_tab.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'dart:convert'; 
 
 class UserLibrosDisponiblesPage extends StatefulWidget {
   final bool isAdminHistoric;
   final bool isUserHistoric;
   final bool isPrincipal;
 
-  UserLibrosDisponiblesPage({
+  const UserLibrosDisponiblesPage({
     super.key,
     this.isAdminHistoric = false,
     this.isUserHistoric = false,
@@ -30,25 +36,62 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage>
   List<dynamic> _filteredBooks = [];
   bool _isDataLoaded = false;
   late TabController _tabController;
-  late IconData _selectedIcon = Icons.person;
+  late IconData _selectedIcon;
+  late String _selectedName;
   OverlayEntry? _overlayEntry;
   final GlobalKey _fabKey = GlobalKey();
   bool _showFloatingActionButton = false;
-  final ApiService _apiService = ApiService(); // Crear una instancia de ApiService
+  final ApiService _apiService =
+      ApiService(); 
+  late WebSocketChannel _channel; 
 
+  void _onTabChanged() async {
+    if (_tabController.index == 2) {
+      return;
+    }
+    await _loadUserInfo();
+    setState(() {
+      _selectedIcon = GetIconFromString(_userInfo!['icono']!);
+      _selectedName = _userInfo!['name']!;
+    });
+  }
+
+  Future<void> _loadUserInfo() async {
+    _userInfo = await LoadUserInfo();
+  }
 
   Future<void> _loadData() async {
     _userInfo = await LoadUserInfo();
-    final email = _userInfo?['email']!;
+    final email = _userInfo?['email'];
 
     final books = widget.isAdminHistoric
         ? await _apiService.fetchBookPrestados()
         : await _apiService.fetchBooks();
 
-    setState(() {
-      _books = books;
-      _filteredBooks = books;
-      _isDataLoaded = true;
+    if (mounted) {
+      setState(() {
+        _books = books;
+        _filteredBooks = books;
+        _isDataLoaded = true;
+      });
+    }
+  }
+
+  void _connectToWebSocket() {
+    _channel = WebSocketChannel.connect(
+      Uri.parse(AppConfig.wsUrl), 
+    );
+
+    _channel.stream.listen((message) {
+      print('Mensaje recibido: $message');
+      final data = jsonDecode(message);
+      if (data['tipo'] == 'actualizacion') {
+        _loadData();
+      }
+    }, onError: (error) {
+      SnackBarService.showErrorSnackBar(context, 'Error en WebSocket: $error');
+    }, onDone: () {
+      _connectToWebSocket();
     });
   }
 
@@ -70,6 +113,7 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage>
     super.initState();
     _tabController = TabController(length: 3, vsync: this)
       ..addListener(() {
+        _onTabChanged();
         setState(() {
           _showFloatingActionButton = _tabController.index == 0 &&
               !widget.isUserHistoric &&
@@ -77,6 +121,7 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage>
         });
       });
     _loadData();
+    _connectToWebSocket(); 
     _showFloatingActionButton = _tabController.index == 0 &&
         !widget.isUserHistoric &&
         !widget.isAdminHistoric;
@@ -85,6 +130,7 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage>
   @override
   void dispose() {
     _tabController.dispose();
+    _channel.sink.close(); 
     _overlayEntry?.remove();
     super.dispose();
   }
@@ -92,22 +138,29 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage>
   @override
   Widget build(BuildContext context) {
     if (!_isDataLoaded) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: SizedBox(
+          width: 100,
+          height: 100,
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.redAccent),
+          ),
+        ),
+      );
     }
 
     if (_userInfo == null) {
-      return const Center(child: Text('No data found'));
+      return const Center(child: Text('No se encontraron datos'));
     }
 
     final role = _userInfo!['role']!;
     final email = _userInfo!['email']!;
-    final name = _userInfo!['name']!;
     final phone = _userInfo!['phone']!;
 
-    return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-      },
+    _selectedIcon = GetIconFromString(_userInfo!['icono']!);
+    _selectedName = _userInfo!['name']!;
+
+    return KeyboardDismiss(
       child: SafeArea(
         child: Stack(
           children: [
@@ -117,7 +170,7 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage>
                   ? LibrosTab(
                       role: role,
                       email: email,
-                      name: name,
+                      name: _selectedName,
                       phone: phone,
                       filterBooks: _filterBooks,
                       filteredBooks: _filteredBooks,
@@ -135,7 +188,7 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage>
                             LibrosTab(
                               role: role,
                               email: email,
-                              name: name,
+                              name: _selectedName,
                               phone: phone,
                               filterBooks: _filterBooks,
                               filteredBooks: _filteredBooks,
@@ -143,13 +196,16 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage>
                               isUserHistoric: widget.isUserHistoric,
                               selectedIcon: _selectedIcon,
                             ),
-                            PrestamosTab(),
+                            const PrestamosTab(),
                             PerfilTab(
-                              userName: name,
+                              userName: _selectedName,
                               rolUser: role,
-                              selectedIcon: _selectedIcon,
+                              emailUser: email,
+                              selectedIcon:
+                                  _selectedIcon, // Usa el IconData convertido
                               onIconChanged: (icon) => setState(() {
-                                _selectedIcon = icon;
+                                _selectedIcon =
+                                    icon; // Actualiza el icono seleccionado
                                 _tabController.index = 0;
                               }),
                             ),
@@ -173,6 +229,7 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage>
                       ),
                     ),
             ),
+            // Botón flotante para agregar un libro
             if (_showFloatingActionButton)
               Positioned(
                 bottom: 95.0,
@@ -184,15 +241,15 @@ class _UserLibrosDisponiblesPageState extends State<UserLibrosDisponiblesPage>
                       context,
                       MaterialPageRoute(
                         builder: (context) => RegisterLibroPage(
-                          name: name,
+                          name: _selectedName,
                           rol: role,
                           selectedIcon: _selectedIcon,
                         ),
                       ),
                     );
                   },
-                  child: Icon(Icons.add, color: Colors.white, size: 40.0),
                   backgroundColor: Colors.redAccent,
+                  child: const Icon(Icons.add, color: Colors.white, size: 40.0),
                 ),
               ),
           ],
