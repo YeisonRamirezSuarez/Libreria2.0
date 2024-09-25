@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/models/usuario_model.dart';
-import 'package:libreria_app/pages/user_prestado_page.dart';
-import 'package:libreria_app/services/api_service.dart';
-import 'package:libreria_app/services/snack_bar_service.dart';
-import 'package:libreria_app/widgets/custom_widgets.dart';
+import 'package:LibreriaApp/models/usuario_model.dart';
+import 'package:LibreriaApp/pages/user_prestado_page.dart';
+import 'package:LibreriaApp/services/api_service.dart';
+import 'package:LibreriaApp/services/snack_bar_service.dart';
+import 'package:LibreriaApp/widgets/custom_widgets.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class BookDetailPage extends StatefulWidget {
@@ -12,14 +12,16 @@ class BookDetailPage extends StatefulWidget {
   final String name;
   final String titleBaner;
   final int cantButton;
+  final IconData selectedIcon;
 
-  BookDetailPage({
+  const BookDetailPage({
     super.key,
     required this.usuario,
     required this.role,
     required this.name,
     required this.titleBaner,
     required this.cantButton,
+    required this.selectedIcon,
   });
 
   @override
@@ -32,7 +34,8 @@ class _BookDetailPageState extends State<BookDetailPage> {
 
   Future<void> _launchURL(BuildContext context, String url) async {
     if (!url.startsWith('http') && !url.startsWith('https')) {
-      SnackBarService.showErrorSnackBar(context, "No se pudo abrir la URL: $url");
+      SnackBarService.showErrorSnackBar(
+          context, "No se pudo abrir la URL: $url");
       return;
     }
 
@@ -47,10 +50,10 @@ class _BookDetailPageState extends State<BookDetailPage> {
     });
     try {
       final response = await _apiService.deleteLibroPrestado(widget.usuario);
-  
 
       if (response.success) {
-        SnackBarService.showSuccessSnackBar(context, 'Libro devuelto exitosamente');
+        SnackBarService.showSuccessSnackBar(
+            context, 'Libro devuelto exitosamente');
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -58,7 +61,8 @@ class _BookDetailPageState extends State<BookDetailPage> {
           ),
         );
       } else {
-        SnackBarService.showErrorSnackBar(context, response.error ?? 'Error desconocido');
+        SnackBarService.showErrorSnackBar(
+            context, response.error ?? 'Error desconocido');
       }
     } catch (error) {
       SnackBarService.showErrorSnackBar(context, 'Error de red: $error');
@@ -78,7 +82,8 @@ class _BookDetailPageState extends State<BookDetailPage> {
     try {
       final response = await _apiService.prestarLibro(widget.usuario);
       if (response.success) {
-        SnackBarService.showSuccessSnackBar(context, 'Libro prestado exitosamente');
+        SnackBarService.showSuccessSnackBar(
+            context, 'Libro prestado exitosamente');
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -86,7 +91,8 @@ class _BookDetailPageState extends State<BookDetailPage> {
           ),
         );
       } else {
-        SnackBarService.showErrorSnackBar(context, response.error ?? 'Error desconocido');
+        SnackBarService.showErrorSnackBar(
+            context, response.error ?? 'Error desconocido');
       }
     } catch (error) {
       SnackBarService.showErrorSnackBar(context, 'Error de red: $error');
@@ -123,7 +129,6 @@ class _BookDetailPageState extends State<BookDetailPage> {
     double textSizeTitle = constraints.maxWidth * 0.06;
     double textSizeDetail = constraints.maxWidth * 0.05;
     double buttonSize = constraints.maxWidth * 0.15;
-
     return Column(
       children: [
         _buildHeader(),
@@ -142,7 +147,9 @@ class _BookDetailPageState extends State<BookDetailPage> {
                   _buildAuthor(textSizeDetail),
                   SizedBox(height: constraints.maxWidth * 0.01),
                   _buildDescription(textSizeDetail),
-                  if (widget.usuario.date.isNotEmpty) ...[
+                  if (widget.usuario.prestamos.isNotEmpty &&
+                      widget.usuario.prestamos[0].fechaPrestamo != null &&
+                      widget.usuario.prestamos[0].fechaPrestamo.isNotEmpty) ...[
                     SizedBox(height: constraints.maxWidth * 0.02),
                     _buildDate(textSizeDetail),
                   ],
@@ -167,6 +174,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
       nameUser: widget.name,
       viewAdd: false,
       viewVolver: true,
+      selectedIcon: widget.selectedIcon,
     );
   }
 
@@ -213,7 +221,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
 
   Widget _buildDate(double textSize) {
     return Text(
-      'Fecha: ${widget.usuario.date}',
+      'Fecha: ${widget.usuario.prestamos[0].fechaPrestamo}',
       style: TextStyle(
         color: Colors.white70,
         fontSize: textSize * 0.8,
@@ -244,7 +252,9 @@ class _BookDetailPageState extends State<BookDetailPage> {
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
         child: CustomButton(
           text: 'Devolver',
-          onPressed: _isLoading ? null : _handleReturn, // Deshabilitar si está cargando
+          onPressed: _isLoading
+              ? null
+              : _handleReturn, // Deshabilitar si está cargando
           dimensioneBoton: buttonSize,
           colorFondo: Colors.redAccent,
         ),
@@ -258,7 +268,10 @@ class _BookDetailPageState extends State<BookDetailPage> {
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
         child: CustomButton(
           text: 'Ver',
-          onPressed: _isLoading ? null : () => _launchURL(context, widget.usuario.bookUrl), // Deshabilitar si está cargando
+          onPressed: _isLoading
+              ? null
+              : () => _launchURL(context,
+                  widget.usuario.bookUrl), // Deshabilitar si está cargando
           dimensioneBoton: buttonSize,
           colorFondo: Colors.redAccent,
         ),
@@ -271,7 +284,8 @@ class _BookDetailPageState extends State<BookDetailPage> {
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: CustomButton(
         text: 'Prestar',
-        onPressed: _isLoading ? null : _handleLend, // Deshabilitar si está cargando
+        onPressed:
+            _isLoading ? null : _handleLend, // Deshabilitar si está cargando
         dimensioneBoton: buttonSize,
         colorFondo: Colors.redAccent,
       ),
@@ -290,25 +304,25 @@ class _BookDetailPageState extends State<BookDetailPage> {
 
   // Widget para el overlay de carga
   Widget _buildLoadingOverlay() {
-  return Positioned.fill(
-    child: Stack(
-      children: [
-        ModalBarrier(
-          dismissible: false,
-          color: Colors.black.withOpacity(0.5),
-        ),
-        Center(
-          child: SizedBox(
-            width: 100,  // Ancho del CircularProgressIndicator
-            height: 100, // Altura del CircularProgressIndicator
-            child: CircularProgressIndicator(
-              color: Colors.redAccent,
-              strokeWidth: 8,  // Ajusta el grosor del borde
+    return Positioned.fill(
+      child: Stack(
+        children: [
+          ModalBarrier(
+            dismissible: false,
+            color: Colors.black.withOpacity(0.5),
+          ),
+          const Center(
+            child: SizedBox(
+              width: 100, // Ancho del CircularProgressIndicator
+              height: 100, // Altura del CircularProgressIndicator
+              child: CircularProgressIndicator(
+                color: Colors.redAccent,
+                strokeWidth: 8, // Ajusta el grosor del borde
+              ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 }

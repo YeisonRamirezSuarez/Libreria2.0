@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/models/usuario_model.dart';
-import 'package:libreria_app/pages/book_history_card_page.dart';
-import 'package:libreria_app/services/api_service.dart';
-import 'package:libreria_app/widgets/custom_widgets.dart';
+import 'package:LibreriaApp/models/usuario_model.dart';
+import 'package:LibreriaApp/pages/book_history_card_page.dart';
+import 'package:LibreriaApp/services/api_service.dart';
+import 'package:LibreriaApp/widgets/custom_widgets.dart';
 
 class BookDetailHistoryPage extends StatelessWidget {
   final Usuario usuario;
   final String role;
   final String name;
-  final ApiService _apiService = ApiService(); // Crear una instancia de ApiService
-
+  final IconData selectedIcon;
+  final ApiService _apiService =
+      ApiService(); // Crear una instancia de ApiService
 
   BookDetailHistoryPage({
     super.key,
     required this.usuario,
     required this.role,
     required this.name,
+    required this.selectedIcon,
   });
 
   @override
@@ -41,20 +43,17 @@ class BookDetailHistoryPage extends StatelessWidget {
       nameUser: name,
       viewAdd: false,
       viewVolver: true,
+      selectedIcon: selectedIcon,
     );
   }
 
-    Widget _buildBody(BuildContext context, Usuario usuario) {
-
-
-        return BookHistoryCardPage(
-          imageUrl: usuario.imageUrl,
-          bookTitle: usuario.title,
-          bookAuthor: usuario.author,
-          bookDescription: usuario.description,
-          usuarios: usuario.prestamos,
-        );
-      
-    
+  Widget _buildBody(BuildContext context, Usuario usuario) {
+    return BookHistoryCardPage(
+      imageUrl: usuario.imageUrl,
+      bookTitle: usuario.title,
+      bookAuthor: usuario.author,
+      bookDescription: usuario.description,
+      usuarios: usuario.prestamos,
+    );
   }
 }

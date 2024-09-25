@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/utils/validators.dart';
-import 'package:libreria_app/widgets/custom_text_field.dart';
-import 'package:libreria_app/widgets/custom_button.dart';
+import 'package:LibreriaApp/utils/validators.dart';
+import 'package:LibreriaApp/widgets/custom_text_field.dart';
+import 'package:LibreriaApp/widgets/custom_button.dart';
 
 class FormLibro extends StatefulWidget {
   final GlobalKey<FormState> formKey;
@@ -161,7 +161,7 @@ class _FormLibroState extends State<FormLibro> {
             dismissible: false,
             color: Colors.black.withOpacity(0.5),
           ),
-          Center(
+          const Center(
             child: SizedBox(
               width: 100, // Ancho del CircularProgressIndicator
               height: 100, // Altura del CircularProgressIndicator

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/widgets/custom_widgets.dart';
+import 'package:LibreriaApp/widgets/custom_widgets.dart';
 
 class CustomButton extends StatelessWidget {
   final String text;
@@ -22,7 +22,10 @@ class CustomButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: enabled ? onPressed : null, // Habilitar o deshabilitar
       style: ButtonStyles.elevatedButtonStyle(
-        backgroundColor: enabled ? colorFondo : colorFondo.withOpacity(0.5), // Cambiar el color si está deshabilitado
+        backgroundColor: enabled
+            ? colorFondo
+            : colorFondo
+                .withOpacity(0.5), // Cambiar el color si está deshabilitado
         minWidth: double.infinity,
         height: dimensioneBoton,
       ),

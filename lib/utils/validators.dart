@@ -48,7 +48,6 @@ class Validators {
     if (value == null || value.isEmpty) {
       return '*Este campo es obligatorio';
     }
-    
     return null;
   }
 
@@ -56,10 +55,10 @@ class Validators {
     if (value == null || value.isEmpty) {
       return '*Este campo es obligatorio';
     }
-    /*final uri = Uri.tryParse(value);
+    final uri = Uri.tryParse(value);
     if (uri == null || !uri.hasAbsolutePath) {
       return '*Por favor ingresa una URL válida';
-    }*/
+    }
     return null;
   }
 

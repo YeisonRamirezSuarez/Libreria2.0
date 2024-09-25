@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_app/models/usuario_model.dart';
-import 'package:libreria_app/pages/update_libro_page.dart';
-import 'package:libreria_app/pages/user_detalle_libro.dart';
-import 'package:libreria_app/pages/user_detalle_libro_history.dart';
-import 'package:libreria_app/widgets/custom_widgets.dart';
+import 'package:LibreriaApp/models/usuario_model.dart';
+import 'package:LibreriaApp/pages/update_libro_page.dart';
+import 'package:LibreriaApp/pages/user_detalle_libro.dart';
+import 'package:LibreriaApp/pages/user_detalle_libro_history.dart';
+import 'package:LibreriaApp/widgets/custom_widgets.dart';
 
 class LibroCard extends StatelessWidget {
   final Usuario usuario;
@@ -37,6 +37,7 @@ class LibroCard extends StatelessWidget {
                 usuario: usuario,
                 role: role,
                 name: name,
+                selectedIcon: selectedIcon,
               ),
             ),
           );
@@ -63,6 +64,7 @@ class LibroCard extends StatelessWidget {
                 role: role,
                 name: name,
                 cantButton: 1,
+                selectedIcon: selectedIcon,
               ),
             ),
           );

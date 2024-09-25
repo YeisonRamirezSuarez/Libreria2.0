@@ -1,4 +1,4 @@
-package com.example.libreria_app
+package com.example.LibreriaApp
 
 import io.flutter.embedding.android.FlutterActivity
 
